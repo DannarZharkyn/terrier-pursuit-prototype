@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Plus, Send } from "lucide-react";
 import { ParticipantShell } from "@/components/participant-shell";
 import { PhotoGrid } from "@/components/photo-grid";
@@ -15,6 +16,10 @@ export default function SharedUploadFolderPage() {
               <p className="mt-1 text-sm text-gray-600">
                 All hunt photos are collected in one shared team folder.
               </p>
+              <p className="mt-3 text-sm leading-6 text-gray-700">
+                After your team has visited every destination, upload all final
+                photos here at once and submit the completed hunt.
+              </p>
             </div>
             <button
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-bu-red text-white shadow-sm"
@@ -26,10 +31,10 @@ export default function SharedUploadFolderPage() {
           </div>
         </section>
         <PhotoGrid />
-        <button className="btn-primary w-full" type="button">
+        <Link href="/participant/uploads/confirm" className="btn-primary w-full">
           <Send className="h-4 w-4" />
           Submit Hunt
-        </button>
+        </Link>
       </div>
     </ParticipantShell>
   );
