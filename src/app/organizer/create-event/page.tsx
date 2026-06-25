@@ -58,8 +58,8 @@ export default function CreateEventPage() {
           />
         </label>
         <div className="mt-8 flex justify-end">
-          <Link href="/organizer/create-event/confirmation" className="btn-primary">
-            Publish Event
+          <Link href="/organizer/create-event/review" className="btn-primary">
+            Review & Publish
           </Link>
         </div>
       </div>
