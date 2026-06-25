@@ -39,6 +39,39 @@ export const teams = [
   },
 ];
 
+export const unassignedStudents = [
+  {
+    id: "alex-morgan",
+    name: "Alex Morgan",
+    email: "alex.morgan@bu.edu",
+    requestedAt: "2:14 PM",
+  },
+  {
+    id: "emma-wilson",
+    name: "Emma Wilson",
+    email: "emma.wilson@bu.edu",
+    requestedAt: "2:18 PM",
+  },
+  {
+    id: "noah-lee",
+    name: "Noah Lee",
+    email: "noah.lee@bu.edu",
+    requestedAt: "2:23 PM",
+  },
+  {
+    id: "sofia-martinez",
+    name: "Sofia Martinez",
+    email: "sofia.martinez@bu.edu",
+    requestedAt: "2:29 PM",
+  },
+  {
+    id: "dylan-park",
+    name: "Dylan Park",
+    email: "dylan.park@bu.edu",
+    requestedAt: "2:37 PM",
+  },
+];
+
 export const clues = [
   "Find the statue where students gather before crossing into the heart of campus.",
   "Take a team photo near a place that sells late-night study fuel.",

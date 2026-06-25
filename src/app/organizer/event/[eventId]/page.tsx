@@ -6,7 +6,12 @@ import { teams } from "@/lib/mock-data";
 const summary = [
   { label: "Registered Students", value: "142", icon: Users },
   { label: "Teams", value: "32", icon: ClipboardCheck },
-  { label: "Unassigned Students", value: "8", icon: UserMinus },
+  {
+    label: "Unassigned Students",
+    value: "8",
+    icon: UserMinus,
+    href: "/organizer/event/spring-campus-chase/unassigned",
+  },
   { label: "Submitted Teams", value: "21", icon: Clock },
 ];
 
@@ -19,8 +24,8 @@ export default function EventDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((item) => {
           const Icon = item.icon;
-          return (
-            <div key={item.label} className="card p-5">
+          const content = (
+            <>
               <Icon className="h-6 w-6 text-bu-red" />
               <p className="mt-4 text-3xl font-black text-gray-950">
                 {item.value}
@@ -28,6 +33,29 @@ export default function EventDashboardPage() {
               <p className="mt-1 text-sm font-semibold text-gray-600">
                 {item.label}
               </p>
+              {item.href ? (
+                <p className="mt-4 text-sm font-bold text-bu-red">
+                  View list
+                </p>
+              ) : null}
+            </>
+          );
+
+          if (item.href) {
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="card block p-5 transition hover:-translate-y-0.5 hover:border-bu-red"
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <div key={item.label} className="card p-5">
+              {content}
             </div>
           );
         })}
