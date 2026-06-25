@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PlusCircle, UserPlus, Users } from "lucide-react";
+import { PlusCircle, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { teams, unassignedStudents } from "@/lib/mock-data";
 
@@ -71,23 +71,15 @@ export default function UnassignedStudentsPage() {
 
         <div className="space-y-6">
           <section className="card p-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-gray-500">
-                  Selected Student
-                </p>
-                <h2 className="mt-1 text-2xl font-black text-gray-950">
-                  {selectedStudent.name}
-                </h2>
-                <p className="mt-1 text-sm text-gray-600">
-                  {selectedStudent.email}
-                </p>
-              </div>
-              <button className="btn-primary" type="button">
-                <UserPlus className="h-4 w-4" />
-                Assign Them Into a Team
-              </button>
-            </div>
+            <p className="text-sm font-semibold text-gray-500">
+              Selected Student
+            </p>
+            <h2 className="mt-1 text-2xl font-black text-gray-950">
+              {selectedStudent.name}
+            </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              {selectedStudent.email}
+            </p>
           </section>
 
           <section className="card overflow-hidden">
