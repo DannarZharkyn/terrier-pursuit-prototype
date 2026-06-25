@@ -12,10 +12,14 @@ export default function ParticipantWelcomePage() {
             Join the Event
           </h1>
           <p className="mt-2 text-sm leading-6 text-gray-600">
-            Enter your details to join Spring Campus Chase.
+            Enter your details and event code to join Spring Campus Chase.
           </p>
         </div>
         <div className="space-y-4">
+          <label className="block">
+            <span className="label">Game Code</span>
+            <input className="field mt-2 uppercase" placeholder="SHA12" />
+          </label>
           <label className="block">
             <span className="label">Full Name</span>
             <input className="field mt-2" placeholder="Alex Morgan" />
