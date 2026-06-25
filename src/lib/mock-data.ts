@@ -6,20 +6,6 @@ export const events = [
     status: "Registration Open",
     teams: 32,
   },
-  {
-    id: "scarlet-night-hunt",
-    name: "Scarlet Night Hunt",
-    date: "May 2, 2027",
-    status: "Draft",
-    teams: 14,
-  },
-  {
-    id: "orientation-terrier-trek",
-    name: "Orientation Terrier Trek",
-    date: "September 6, 2027",
-    status: "Registration Closed",
-    teams: 48,
-  },
 ];
 
 export const teams = [

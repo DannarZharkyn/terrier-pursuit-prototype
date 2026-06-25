@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { CalendarDays, LayoutDashboard, PlusCircle } from "lucide-react";
+import { LayoutDashboard, PlusCircle } from "lucide-react";
 import { Logo } from "./logo";
 
 const navItems = [
   { href: "/organizer/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/organizer/create-event", label: "Create Event", icon: PlusCircle },
-  { href: "/organizer/event/spring-campus-chase", label: "Event View", icon: CalendarDays },
 ];
 
 export function OrganizerShell({
