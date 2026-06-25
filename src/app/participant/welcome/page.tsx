@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, UserPlus, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export default function ParticipantWelcomePage() {
@@ -30,17 +30,9 @@ export default function ParticipantWelcomePage() {
           </label>
         </div>
         <div className="mt-7 grid gap-3">
-          <Link href="/participant/create-team" className="btn-primary">
-            <UserPlus className="h-4 w-4" />
-            Create Team
-          </Link>
-          <Link href="/participant/join-team" className="btn-secondary">
-            <Users className="h-4 w-4" />
-            Join Existing Team
-          </Link>
-          <Link href="/participant/find-team" className="btn-secondary">
-            <Search className="h-4 w-4" />
-            Find Me a Team
+          <Link href="/participant/team-options" className="btn-primary">
+            Sign In
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
