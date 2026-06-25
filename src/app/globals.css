@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+@layer components {
+  .page-shell {
+    @apply min-h-screen bg-white text-ink;
+  }
+
+  .card {
+    @apply rounded-lg border border-gray-200 bg-gray-50 shadow-soft;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-bu-red px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-bu-dark focus:outline-none focus:ring-4 focus:ring-red-100;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-100;
+  }
+
+  .field {
+    @apply w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-bu-red focus:ring-4 focus:ring-red-50;
+  }
+
+  .label {
+    @apply text-sm font-semibold text-gray-700;
+  }
+
+  .status-pill {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+  }
+}
