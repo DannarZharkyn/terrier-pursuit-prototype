@@ -38,7 +38,7 @@ export function OrganizerShell({
           </nav>
         </aside>
         <main className="flex-1 px-5 py-6 sm:px-8 lg:px-10">
-          <header className="mb-8 flex flex-col gap-5 border-b border-gray-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
+          <header className="mb-8 border-b border-gray-200 pb-6">
             <div>
               <div className="mb-5 lg:hidden">
                 <Logo href="/organizer/dashboard" />
@@ -50,9 +50,6 @@ export function OrganizerShell({
                 {subtitle}
               </p>
             </div>
-            <Link href="/participant/welcome" className="btn-secondary">
-              Participant preview
-            </Link>
           </header>
           {children}
         </main>

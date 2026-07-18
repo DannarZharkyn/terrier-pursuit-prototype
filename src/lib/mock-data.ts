@@ -1,13 +1,3 @@
-export const events = [
-  {
-    id: "spring-campus-chase",
-    name: "Spring Campus Chase",
-    date: "April 18, 2027",
-    status: "Registration Open",
-    teams: 32,
-  },
-];
-
 export const teams = [
   {
     id: "kenmore-crawlers",

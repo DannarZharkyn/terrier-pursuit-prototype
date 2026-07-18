@@ -4,7 +4,7 @@ import { Logo } from "./logo";
 
 const tabs = [
   { href: "/participant/home", label: "Home", icon: Home },
-  { href: "/participant/team", label: "Team", icon: Users },
+  { href: "/participant/team-options", label: "Team", icon: Users },
   { href: "/participant/uploads", label: "Folder", icon: FolderOpen },
   { href: "/participant/profile", label: "Profile", icon: User },
 ];
@@ -20,15 +20,7 @@ export function ParticipantShell({
     <div className="min-h-screen bg-gray-100">
       <main className="mx-auto min-h-screen max-w-md bg-white pb-24 shadow-soft">
         <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-5 py-4 backdrop-blur">
-          <div className="flex items-center justify-between gap-3">
-            <Logo href="/participant/home" />
-            <Link
-              href="/organizer/dashboard"
-              className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-bu-red shadow-sm transition hover:border-bu-red hover:bg-bu-soft"
-            >
-              Switch to Organizer
-            </Link>
-          </div>
+          <Logo href="/participant/home" />
           <h1 className="mt-5 text-2xl font-black text-gray-950">{title}</h1>
         </header>
         <section className="px-5 py-6">{children}</section>

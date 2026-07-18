@@ -1,9 +1,16 @@
 import Link from "next/link";
-import { ArrowRight, CalendarPlus, Users } from "lucide-react";
+import { unstable_noStore as noStore } from "next/cache";
+import { CalendarPlus } from "lucide-react";
+import { OrganizerEventList } from "@/components/organizer-event-list";
 import { OrganizerShell } from "@/components/organizer-shell";
-import { events } from "@/lib/mock-data";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export default function OrganizerDashboardPage() {
+export const dynamic = "force-dynamic";
+
+export default async function OrganizerDashboardPage() {
+  noStore();
+  const events = await getOrganizerEvents();
+
   return (
     <OrganizerShell
       title="Organizer Dashboard"
@@ -23,42 +30,63 @@ export default function OrganizerDashboardPage() {
           <CalendarPlus className="h-10 w-10" />
         </Link>
       </div>
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-black text-gray-950">Existing Events</h2>
-          <span className="text-sm font-semibold text-gray-500">
-            {events.length} events
-          </span>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {events.map((event) => (
-            <article key={event.id} className="card p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-black text-gray-950">
-                    {event.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-600">{event.date}</p>
-                </div>
-                <span className="status-pill bg-white text-bu-dark">
-                  {event.status}
-                </span>
-              </div>
-              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Users className="h-4 w-4 text-bu-red" />
-                {event.teams} teams
-              </div>
-              <Link
-                href={`/organizer/event/${event.id}`}
-                className="btn-secondary mt-6 w-full"
-              >
-                View Event
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </article>
-          ))}
-        </div>
-      </section>
+
+      <OrganizerEventList initialEvents={events} />
     </OrganizerShell>
   );
+}
+
+async function getOrganizerEvents() {
+  const supabase = createSupabaseAdminClient();
+
+  const { data: eventRows, error: eventError } = await supabase
+    .from("events")
+    .select("id, name, status, starts_at, created_at")
+    .order("created_at", { ascending: false });
+
+  if (eventError) {
+    throw new Error(`Could not load organizer events: ${eventError.message}`);
+  }
+
+  const { data: teamRows, error: teamError } = await supabase
+    .from("teams")
+    .select("event_id");
+
+  if (teamError) {
+    throw new Error(`Could not load event team counts: ${teamError.message}`);
+  }
+
+  const teamCounts = new Map<string, number>();
+
+  for (const team of teamRows ?? []) {
+    const eventId = team.event_id as string;
+    teamCounts.set(eventId, (teamCounts.get(eventId) ?? 0) + 1);
+  }
+
+  return (eventRows ?? []).map((event) => ({
+    id: event.id as string,
+    name: event.name as string,
+    date: formatEventDate((event.starts_at as string | null) ?? event.created_at),
+    status: formatStatus(event.status as string),
+    teams: teamCounts.get(event.id as string) ?? 0,
+  }));
+}
+
+function formatEventDate(value: string | null) {
+  if (!value) {
+    return "Date not set";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function formatStatus(status: string) {
+  return status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
