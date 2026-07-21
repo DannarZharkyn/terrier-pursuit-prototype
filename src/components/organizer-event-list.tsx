@@ -94,14 +94,14 @@ export function OrganizerEventList({ initialEvents }: OrganizerEventListProps) {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {events.map((event) => (
             <article key={event.id} className="card p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                   <h3 className="text-lg font-black text-gray-950">
                     {event.name}
                   </h3>
                   <p className="mt-1 text-sm text-gray-600">{event.date}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-end">
                   <span className="status-pill bg-white text-bu-dark">
                     {event.status}
                   </span>

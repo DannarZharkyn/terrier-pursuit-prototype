@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { PlusCircle, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -25,13 +25,17 @@ type ParticipantRow = {
   email: string;
 };
 
+type TeamRow = {
+  id: string;
+  name: string;
+  team_code: string;
+};
+
 export default async function UnassignedStudentsPage({
   params,
 }: UnassignedStudentsPageProps) {
   noStore();
   const { students, teams } = await getUnassignedPageData(params.eventId);
-  const selectedStudent = students[0];
-
   return (
     <OrganizerShell
       title="Unassigned Students"
@@ -66,8 +70,8 @@ export default async function UnassignedStudentsPage({
                   }`}
                   type="button"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
                       <p className="font-bold text-gray-950">{student.name}</p>
                       <p className="mt-1 text-sm text-gray-600">
                         {student.email}
@@ -87,60 +91,33 @@ export default async function UnassignedStudentsPage({
           </div>
         </div>
 
-        <div className="space-y-6">
-          <section className="card p-5">
-            <p className="text-sm font-semibold text-gray-500">
-              Selected Student
-            </p>
-            {selectedStudent ? (
-              <>
-                <h2 className="mt-1 text-2xl font-black text-gray-950">
-                  {selectedStudent.name}
-                </h2>
-                <p className="mt-1 text-sm text-gray-600">
-                  {selectedStudent.email}
-                </p>
-              </>
-            ) : (
-              <p className="mt-1 text-sm text-gray-600">
-                No student selected.
-              </p>
-            )}
-          </section>
-
+        <div>
           <section className="card overflow-hidden">
             <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
               <h2 className="text-lg font-black text-gray-950">
                 Available Teams
               </h2>
               <p className="mt-1 text-sm text-gray-600">
-                Assignment actions will be connected in a later step.
+                Existing teams for this event. Assignment actions will be added later.
               </p>
             </div>
-            <div className="grid gap-4 p-5 lg:grid-cols-2">
-              <button
-                className="rounded-lg border border-dashed border-bu-red bg-bu-soft p-5 text-left transition hover:bg-white"
-                type="button"
-              >
-                <PlusCircle className="h-6 w-6 text-bu-red" />
-                <p className="mt-3 font-black text-gray-950">
-                  Create New Team
-                </p>
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  Adds a new empty team to the assignment list later.
-                </p>
-              </button>
-
-              {teams.map((team) => (
+            <div className="grid gap-4 p-5 md:grid-cols-2">
+              {teams.length ? teams.map((team) => (
                 <div
                   key={team.id}
                   className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-black text-gray-950">{team.name}</p>
                       <p className="mt-1 text-sm text-gray-600">
                         {team.memberCount} members
+                      </p>
+                      <p className="mt-3 text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Team code
+                      </p>
+                      <p className="mt-1 font-mono text-base font-black tracking-wider text-bu-dark">
+                        {team.code}
                       </p>
                     </div>
                     <span className="status-pill bg-gray-100 text-gray-700">
@@ -148,11 +125,10 @@ export default async function UnassignedStudentsPage({
                       {team.memberCount}
                     </span>
                   </div>
-                  <button className="btn-secondary mt-5 w-full py-2" type="button">
-                    Assign to This Team
-                  </button>
                 </div>
-              ))}
+              )) : (
+                <p className="text-sm text-gray-600">No teams have been created for this event.</p>
+              )}
             </div>
           </section>
         </div>
@@ -191,7 +167,7 @@ async function getUnassignedPageData(eventId: string) {
 
   const { data: teams, error: teamError } = await supabase
     .from("teams")
-    .select("id, name")
+    .select("id, name, team_code")
     .eq("event_id", eventId)
     .order("created_at", { ascending: true });
 
@@ -243,10 +219,11 @@ async function getUnassignedPageData(eventId: string) {
       .filter((student): student is NonNullable<typeof student> =>
         Boolean(student),
       ),
-    teams: (teams ?? []).map((team) => ({
-      id: team.id as string,
-      name: team.name as string,
-      memberCount: memberCounts.get(team.id as string) ?? 0,
+    teams: ((teams ?? []) as unknown as TeamRow[]).map((team) => ({
+      id: team.id,
+      name: team.name,
+      code: team.team_code,
+      memberCount: memberCounts.get(team.id) ?? 0,
     })),
   };
 }

@@ -17,15 +17,15 @@ export function ParticipantShell({
   title: string;
 }) {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="mx-auto min-h-screen max-w-md bg-white pb-24 shadow-soft">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-5 py-4 backdrop-blur">
+    <div className="min-h-screen overflow-x-hidden bg-gray-100">
+      <main className="mx-auto min-h-screen max-w-md bg-white pb-28 shadow-soft">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-5">
           <Logo href="/participant/home" />
-          <h1 className="mt-5 text-2xl font-black text-gray-950">{title}</h1>
+          <h1 className="mt-4 text-2xl font-black leading-tight text-gray-950">{title}</h1>
         </header>
-        <section className="px-5 py-6">{children}</section>
+        <section className="px-4 py-5 sm:px-5 sm:py-6">{children}</section>
       </main>
-      <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-gray-200 bg-white">
+      <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]" aria-label="Participant navigation">
         <div className="grid grid-cols-4">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -33,7 +33,7 @@ export function ParticipantShell({
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex flex-col items-center gap-1 px-2 py-3 text-xs font-semibold text-gray-600 transition hover:text-bu-red"
+                className="flex min-h-14 flex-col items-center justify-center gap-1 px-1 py-2 text-xs font-semibold text-gray-600 transition hover:text-bu-red"
               >
                 <Icon className="h-5 w-5" />
                 {tab.label}

@@ -62,7 +62,7 @@ export function CreateEventForm() {
         </label>
         <fieldset>
           <legend className="label">Event Start Time</legend>
-          <div className="mt-2 grid grid-cols-2 gap-3">
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
             <input
               className="field"
               placeholder="MM/DD/YYYY"
@@ -79,7 +79,7 @@ export function CreateEventForm() {
         </fieldset>
         <fieldset>
           <legend className="label">Submission Deadline</legend>
-          <div className="mt-2 grid grid-cols-2 gap-3">
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
             <input
               className="field"
               placeholder="MM/DD/YYYY"
@@ -111,21 +111,21 @@ export function CreateEventForm() {
           onChange={(event) => setRules(event.target.value)}
         />
       </label>
-      <div className="mt-8 flex flex-col items-end gap-3">
+      <div className="mt-8 flex flex-col items-stretch gap-3 sm:items-end">
         {canReview ? (
-          <button className="btn-primary" type="button" onClick={handleReview}>
+          <button className="btn-primary w-full sm:w-auto" type="button" onClick={handleReview}>
             Review & Publish
           </button>
         ) : (
           <>
             <button
-              className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-300 px-4 py-3 text-sm font-semibold text-gray-600"
+              className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-300 px-4 py-3 text-sm font-semibold text-gray-600 sm:w-auto"
               type="button"
               disabled
             >
               Review & Publish
             </button>
-            <p className="text-sm font-semibold text-gray-500">
+            <p className="max-w-2xl text-sm font-semibold leading-6 text-gray-500 sm:text-right">
               Complete all event fields using MM/DD/YYYY and AM/PM time, then upload valid participant and locations files to continue.
             </p>
           </>

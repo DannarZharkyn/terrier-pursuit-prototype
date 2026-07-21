@@ -56,7 +56,7 @@ export function ParticipantHomeContent() {
                   : "Countdown until game begins"}
             </p>
           </div>
-          <p className="mt-4 text-4xl font-black tracking-normal">
+          <p className="mt-4 text-3xl font-black tabular-nums tracking-normal min-[360px]:text-4xl">
             {hasValidStartTime ? formatCountdown(remainingMs) : "--:--:--"}
           </p>
           {hasValidStartTime ? (

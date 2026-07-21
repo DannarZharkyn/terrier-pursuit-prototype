@@ -8,8 +8,8 @@ export default function SharedUploadFolderPage() {
     <ParticipantShell title="Shared Upload Folder">
       <div className="space-y-5">
         <section className="card p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div>
+          <div className="flex flex-col items-start gap-4 min-[360px]:flex-row min-[360px]:justify-between">
+            <div className="min-w-0">
               <h2 className="text-lg font-black text-gray-950">
                 Kenmore Crawlers Folder
               </h2>

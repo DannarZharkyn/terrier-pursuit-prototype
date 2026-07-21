@@ -19,7 +19,7 @@ export default async function OrganizerDashboardPage() {
       <div className="mb-8">
         <Link
           href="/organizer/create-event"
-          className="flex min-h-32 items-center justify-between rounded-lg bg-bu-red p-6 text-white shadow-soft transition hover:bg-bu-dark"
+          className="flex min-h-32 flex-col items-start justify-between gap-5 rounded-lg bg-bu-red p-5 text-white shadow-soft transition hover:bg-bu-dark sm:flex-row sm:items-center sm:p-6"
         >
           <span>
             <span className="block text-lg font-black">Create New Event</span>
@@ -27,7 +27,7 @@ export default async function OrganizerDashboardPage() {
               Upload rosters, clues, rules, and publish registration.
             </span>
           </span>
-          <CalendarPlus className="h-10 w-10" />
+          <CalendarPlus className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
         </Link>
       </div>
 

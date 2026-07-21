@@ -42,6 +42,21 @@ export function OrganizerShell({
             <div>
               <div className="mb-5 lg:hidden">
                 <Logo href="/organizer/dashboard" />
+                <nav className="mt-5 grid grid-cols-2 gap-2" aria-label="Organizer navigation">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-center text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-white hover:text-bu-red"
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
               </div>
               <h1 className="text-2xl font-black text-gray-950 sm:text-3xl">
                 {title}
