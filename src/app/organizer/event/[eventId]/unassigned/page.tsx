@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
+import { UnassignedStudentsContent } from "@/components/unassigned-students-content";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -50,89 +50,11 @@ export default async function UnassignedStudentsPage({
         </Link>
       </div>
 
-      <section className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <div className="card overflow-hidden">
-          <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
-            <h2 className="text-lg font-black text-gray-950">
-              Unassigned List
-            </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Participants who asked the organizer to place them.
-            </p>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {students.length ? (
-              students.map((student, index) => (
-                <button
-                  key={student.id}
-                  className={`block w-full px-5 py-4 text-left transition ${
-                    index === 0 ? "bg-bu-soft" : "bg-white hover:bg-gray-50"
-                  }`}
-                  type="button"
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="font-bold text-gray-950">{student.name}</p>
-                      <p className="mt-1 text-sm text-gray-600">
-                        {student.email}
-                      </p>
-                    </div>
-                    <span className="text-xs font-semibold text-gray-500">
-                      {student.requestedAt}
-                    </span>
-                  </div>
-                </button>
-              ))
-            ) : (
-              <div className="px-5 py-4 text-sm text-gray-600">
-                No participants are waiting for organizer placement.
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <section className="card overflow-hidden">
-            <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
-              <h2 className="text-lg font-black text-gray-950">
-                Available Teams
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Existing teams for this event. Assignment actions will be added later.
-              </p>
-            </div>
-            <div className="grid gap-4 p-5 md:grid-cols-2">
-              {teams.length ? teams.map((team) => (
-                <div
-                  key={team.id}
-                  className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-black text-gray-950">{team.name}</p>
-                      <p className="mt-1 text-sm text-gray-600">
-                        {team.memberCount} members
-                      </p>
-                      <p className="mt-3 text-xs font-bold uppercase tracking-wide text-gray-500">
-                        Team code
-                      </p>
-                      <p className="mt-1 font-mono text-base font-black tracking-wider text-bu-dark">
-                        {team.code}
-                      </p>
-                    </div>
-                    <span className="status-pill bg-gray-100 text-gray-700">
-                      <Users className="mr-1 h-3 w-3" />
-                      {team.memberCount}
-                    </span>
-                  </div>
-                </div>
-              )) : (
-                <p className="text-sm text-gray-600">No teams have been created for this event.</p>
-              )}
-            </div>
-          </section>
-        </div>
-      </section>
+      <UnassignedStudentsContent
+        eventId={params.eventId}
+        initialStudents={students}
+        initialTeams={teams}
+      />
     </OrganizerShell>
   );
 }

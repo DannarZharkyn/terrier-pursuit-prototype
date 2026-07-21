@@ -49,6 +49,13 @@ export default async function EventDashboardPage({
       title={dashboard.name}
       subtitle="Monitor registration, team formation, and submission review progress."
     >
+      <section className="mb-6 rounded-lg bg-bu-red p-5 text-white shadow-soft sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-red-100">Participant game code</p>
+          <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em] sm:text-4xl">{dashboard.gameCode}</p>
+        </div>
+        <p className="mt-3 max-w-sm text-sm leading-6 text-red-50 sm:mt-0 sm:text-right">Share this code with participants listed in this event&apos;s uploaded roster.</p>
+      </section>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((item) => {
           const Icon = item.icon;
@@ -152,7 +159,7 @@ async function getEventDashboard(eventId: string) {
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, name")
+    .select("id, name, game_code")
     .eq("id", eventId)
     .single();
 
@@ -252,6 +259,7 @@ async function getEventDashboard(eventId: string) {
 
   return {
     name: event.name as string,
+    gameCode: (event.game_code as string | null) ?? "Not published",
     participantCount: String(participants?.length ?? 0),
     teamCount: String(teamRows.length),
     unassignedCount: String(requestedParticipantCount),

@@ -11,6 +11,7 @@ export type OrganizerDashboardEvent = {
   date: string;
   status: string;
   teams: number;
+  gameCode: string;
 };
 
 type OrganizerEventListProps = {
@@ -115,6 +116,10 @@ export function OrganizerEventList({ initialEvents }: OrganizerEventListProps) {
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
+              </div>
+              <div className="mt-5 rounded-lg border border-red-100 bg-white px-4 py-3 text-center">
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Game code</p>
+                <p className="mt-1 font-mono text-2xl font-black tracking-[0.2em] text-bu-dark">{event.gameCode}</p>
               </div>
               <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <Users className="h-4 w-4 text-bu-red" />

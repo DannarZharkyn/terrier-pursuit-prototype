@@ -41,7 +41,7 @@ async function getOrganizerEvents() {
 
   const { data: eventRows, error: eventError } = await supabase
     .from("events")
-    .select("id, name, status, starts_at, created_at")
+    .select("id, name, game_code, status, starts_at, created_at")
     .order("created_at", { ascending: false });
 
   if (eventError) {
@@ -68,6 +68,7 @@ async function getOrganizerEvents() {
     name: event.name as string,
     date: formatEventDate((event.starts_at as string | null) ?? event.created_at),
     status: formatStatus(event.status as string),
+    gameCode: (event.game_code as string | null) ?? "Not published",
     teams: teamCounts.get(event.id as string) ?? 0,
   }));
 }

@@ -1,0 +1,156 @@
+"use client";
+
+import { useState } from "react";
+import { CheckCircle2, UserPlus, Users, XCircle } from "lucide-react";
+
+export type UnassignedStudent = {
+  id: string;
+  name: string;
+  email: string;
+  requestedAt: string;
+};
+
+export type AvailableTeam = {
+  id: string;
+  name: string;
+  code: string;
+  memberCount: number;
+};
+
+export function UnassignedStudentsContent({
+  eventId,
+  initialStudents,
+  initialTeams,
+}: {
+  eventId: string;
+  initialStudents: UnassignedStudent[];
+  initialTeams: AvailableTeam[];
+}) {
+  const [students, setStudents] = useState(initialStudents);
+  const [teams, setTeams] = useState(initialTeams);
+  const [selectedStudentId, setSelectedStudentId] = useState(initialStudents[0]?.id);
+  const [assigningTeamId, setAssigningTeamId] = useState<string>();
+  const [success, setSuccess] = useState<string>();
+  const [error, setError] = useState<string>();
+  const selectedStudent = students.find((student) => student.id === selectedStudentId);
+
+  async function assignToTeam(team: AvailableTeam) {
+    if (!selectedStudent) {
+      return;
+    }
+
+    setAssigningTeamId(team.id);
+    setSuccess(undefined);
+    setError(undefined);
+
+    try {
+      const response = await fetch("/api/organizer/team-assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId,
+          participantId: selectedStudent.id,
+          teamId: team.id,
+        }),
+      });
+      const result = (await response.json()) as { ok: boolean; error?: string };
+
+      if (!result.ok) {
+        setError(result.error ?? "Could not assign the participant.");
+        return;
+      }
+
+      const remainingStudents = students.filter((student) => student.id !== selectedStudent.id);
+      setStudents(remainingStudents);
+      setSelectedStudentId(remainingStudents[0]?.id);
+      setTeams((currentTeams) =>
+        currentTeams.map((currentTeam) =>
+          currentTeam.id === team.id
+            ? { ...currentTeam, memberCount: currentTeam.memberCount + 1 }
+            : currentTeam,
+        ),
+      );
+      setSuccess(`${selectedStudent.name} was assigned to ${team.name}.`);
+    } catch {
+      setError("Could not reach the assignment service. Please try again.");
+    } finally {
+      setAssigningTeamId(undefined);
+    }
+  }
+
+  return (
+    <>
+      {success ? (
+        <div className="mb-5 rounded-lg border border-green-200 bg-green-50 p-4 text-sm font-bold text-green-800">
+          <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" />{success}</div>
+        </div>
+      ) : null}
+      {error ? (
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">
+          <div className="flex items-center gap-2"><XCircle className="h-4 w-4" />{error}</div>
+        </div>
+      ) : null}
+
+      <section className="grid gap-6 xl:grid-cols-[380px_1fr]">
+        <div className="card overflow-hidden">
+          <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
+            <h2 className="text-lg font-black text-gray-950">Unassigned List</h2>
+            <p className="mt-1 text-sm text-gray-600">Select a participant, then choose their team.</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {students.length ? students.map((student) => (
+              <button
+                key={student.id}
+                className={`block min-h-16 w-full px-5 py-4 text-left transition ${student.id === selectedStudentId ? "bg-bu-soft" : "bg-white hover:bg-gray-50"}`}
+                type="button"
+                onClick={() => { setSelectedStudentId(student.id); setSuccess(undefined); setError(undefined); }}
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-950">{student.name}</p>
+                    <p className="mt-1 text-sm text-gray-600">{student.email}</p>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-500">{student.requestedAt}</span>
+                </div>
+              </button>
+            )) : (
+              <div className="px-5 py-4 text-sm text-gray-600">No participants are waiting for organizer placement.</div>
+            )}
+          </div>
+        </div>
+
+        <section className="card overflow-hidden">
+          <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Selected participant</p>
+            <h2 className="mt-1 text-lg font-black text-gray-950">{selectedStudent?.name ?? "No participant selected"}</h2>
+            {selectedStudent ? <p className="mt-1 text-sm text-gray-600">{selectedStudent.email}</p> : null}
+          </div>
+          <div className="grid gap-4 p-5 md:grid-cols-2">
+            {teams.length ? teams.map((team) => (
+              <div key={team.id} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-black text-gray-950">{team.name}</p>
+                    <p className="mt-1 text-sm text-gray-600">{team.memberCount} members</p>
+                    <p className="mt-3 text-xs font-bold uppercase tracking-wide text-gray-500">Team code</p>
+                    <p className="mt-1 font-mono text-base font-black tracking-wider text-bu-dark">{team.code}</p>
+                  </div>
+                  <span className="status-pill bg-gray-100 text-gray-700"><Users className="mr-1 h-3 w-3" />{team.memberCount}</span>
+                </div>
+                <button
+                  className="btn-primary mt-5 w-full disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+                  type="button"
+                  disabled={!selectedStudent || Boolean(assigningTeamId)}
+                  onClick={() => assignToTeam(team)}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  {assigningTeamId === team.id ? "Assigning..." : "Assign to This Team"}
+                </button>
+              </div>
+            )) : <p className="text-sm text-gray-600">No teams have been created for this event.</p>}
+          </div>
+        </section>
+      </section>
+    </>
+  );
+}
