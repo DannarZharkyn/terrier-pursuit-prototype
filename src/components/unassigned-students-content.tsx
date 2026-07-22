@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { CheckCircle2, PlusCircle, UserPlus, Users, XCircle } from "lucide-react";
+import { CheckCircle2, PlusCircle, Trash2, UserPlus, Users, XCircle } from "lucide-react";
 
 export type UnassignedStudent = {
   id: string;
@@ -14,7 +14,7 @@ export type AvailableTeam = {
   name: string;
   code: string;
   memberCount: number;
-  memberNames: string[];
+  members: UnassignedStudent[];
 };
 
 export function UnassignedStudentsContent({
@@ -33,6 +33,7 @@ export function UnassignedStudentsContent({
   const [teamName, setTeamName] = useState("");
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [expandedTeamId, setExpandedTeamId] = useState<string>();
+  const [removingParticipantId, setRemovingParticipantId] = useState<string>();
   const [success, setSuccess] = useState<string>();
   const [error, setError] = useState<string>();
   const selectedStudent = students.find((student) => student.id === selectedStudentId);
@@ -105,7 +106,7 @@ export function UnassignedStudentsContent({
             ? {
                 ...currentTeam,
                 memberCount: currentTeam.memberCount + 1,
-                memberNames: [...currentTeam.memberNames, selectedStudent.name],
+                members: [...currentTeam.members, selectedStudent],
               }
             : currentTeam,
         ),
@@ -115,6 +116,47 @@ export function UnassignedStudentsContent({
       setError("Could not reach the assignment service. Please try again.");
     } finally {
       setAssigningTeamId(undefined);
+    }
+  }
+
+  async function removeFromTeam(team: AvailableTeam, member: UnassignedStudent) {
+    if (!window.confirm(`Remove ${member.name} from ${team.name}?`)) {
+      return;
+    }
+
+    setRemovingParticipantId(member.id);
+    setSuccess(undefined);
+    setError(undefined);
+
+    try {
+      const response = await fetch("/api/organizer/team-assignments", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, participantId: member.id, teamId: team.id }),
+      });
+      const result = (await response.json()) as { ok: boolean; error?: string };
+
+      if (!result.ok) {
+        setError(result.error ?? "Could not remove the participant from the team.");
+        return;
+      }
+
+      setTeams((currentTeams) => currentTeams.map((currentTeam) =>
+        currentTeam.id === team.id
+          ? {
+              ...currentTeam,
+              memberCount: Math.max(0, currentTeam.memberCount - 1),
+              members: currentTeam.members.filter((currentMember) => currentMember.id !== member.id),
+            }
+          : currentTeam,
+      ));
+      setStudents((currentStudents) => [...currentStudents, member]);
+      setSelectedStudentId((currentId) => currentId ?? member.id);
+      setSuccess(`${member.name} was removed from ${team.name} and returned to the unassigned list.`);
+    } catch {
+      setError("Could not reach the removal service. Please try again.");
+    } finally {
+      setRemovingParticipantId(undefined);
     }
   }
 
@@ -210,9 +252,23 @@ export function UnassignedStudentsContent({
                 {expandedTeamId === team.id ? (
                   <div className="mt-4 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
                     <p className="text-[10px] font-bold uppercase tracking-wide text-gray-500">Members</p>
-                    {team.memberNames.length ? (
+                    {team.members.length ? (
                       <ul className="mt-1 space-y-0.5 text-xs font-medium text-gray-700">
-                        {team.memberNames.map((memberName) => <li key={memberName}>{memberName}</li>)}
+                        {team.members.map((member) => (
+                          <li key={member.id} className="flex min-h-7 items-center justify-between gap-2">
+                            <span className="min-w-0 truncate">{member.name}</span>
+                            <button
+                              className="rounded p-1 text-gray-400 transition hover:bg-red-100 hover:text-bu-red disabled:cursor-not-allowed disabled:opacity-50"
+                              type="button"
+                              aria-label={`Remove ${member.name} from ${team.name}`}
+                              title={`Remove ${member.name}`}
+                              disabled={Boolean(removingParticipantId)}
+                              onClick={() => removeFromTeam(team, member)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </li>
+                        ))}
                       </ul>
                     ) : (
                       <p className="mt-1 text-xs text-gray-500">No members yet.</p>

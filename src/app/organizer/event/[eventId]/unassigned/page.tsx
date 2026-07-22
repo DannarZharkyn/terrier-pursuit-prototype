@@ -96,23 +96,22 @@ async function getUnassignedPageData(eventId: string) {
 
   const membershipRows = (memberships.data ?? []) as unknown as TeamMembershipRow[];
   const participantRows = (participants.data ?? []) as unknown as ParticipantRow[];
-  const memberNamesByParticipantId = new Map(
-    participantRows.map((participant) => [
-      participant.id,
-      `${participant.first_name} ${participant.last_name}`,
-    ]),
-  );
-  const memberNamesByTeamId = new Map<string, string[]>();
+  const participantById = new Map(participantRows.map((participant) => [participant.id, participant]));
+  const membersByTeamId = new Map<string, { id: string; name: string; email: string }[]>();
   const assignedParticipantIds = new Set<string>();
 
   for (const membership of membershipRows) {
     assignedParticipantIds.add(membership.participant_id);
-    const memberName = memberNamesByParticipantId.get(membership.participant_id);
+    const participant = participantById.get(membership.participant_id);
 
-    if (memberName) {
-      memberNamesByTeamId.set(membership.team_id, [
-        ...(memberNamesByTeamId.get(membership.team_id) ?? []),
-        memberName,
+    if (participant) {
+      membersByTeamId.set(membership.team_id, [
+        ...(membersByTeamId.get(membership.team_id) ?? []),
+        {
+          id: participant.id,
+          name: `${participant.first_name} ${participant.last_name}`,
+          email: participant.email,
+        },
       ]);
     }
   }
@@ -129,8 +128,8 @@ async function getUnassignedPageData(eventId: string) {
       id: team.id,
       name: team.name,
       code: team.team_code,
-      memberCount: memberNamesByTeamId.get(team.id)?.length ?? 0,
-      memberNames: memberNamesByTeamId.get(team.id) ?? [],
+      memberCount: membersByTeamId.get(team.id)?.length ?? 0,
+      members: membersByTeamId.get(team.id) ?? [],
     })),
   };
 }

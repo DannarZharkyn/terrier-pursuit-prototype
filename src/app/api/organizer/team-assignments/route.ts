@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -88,6 +89,81 @@ export async function POST(request: Request) {
     return json({ ok: false, error: requestDeleteError.message }, 500);
   }
 
+  return json({ ok: true, team: { id: teamId, name: team.name as string } });
+}
+
+export async function DELETE(request: Request) {
+  let body: AssignmentBody;
+
+  try {
+    body = (await request.json()) as AssignmentBody;
+  } catch {
+    return json({ ok: false, error: "Request body must be valid JSON." }, 400);
+  }
+
+  const eventId = stringValue(body.eventId);
+  const participantId = stringValue(body.participantId);
+  const teamId = stringValue(body.teamId);
+
+  if (![eventId, participantId, teamId].every(isUuid)) {
+    return json({ ok: false, error: "Please check the event, participant, and team." }, 400);
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const [{ data: participant, error: participantError }, { data: team, error: teamError }] =
+    await Promise.all([
+      supabase
+        .from("participants")
+        .select("id")
+        .eq("id", participantId)
+        .eq("event_id", eventId)
+        .maybeSingle(),
+      supabase
+        .from("teams")
+        .select("id, name")
+        .eq("id", teamId)
+        .eq("event_id", eventId)
+        .maybeSingle(),
+    ]);
+
+  if (participantError || teamError) {
+    return json(
+      { ok: false, error: participantError?.message ?? teamError?.message ?? "Could not validate removal." },
+      500,
+    );
+  }
+
+  if (!participant || !team) {
+    return json({ ok: false, error: "The participant and team must belong to this event." }, 404);
+  }
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("team_memberships")
+    .select("team_id")
+    .eq("team_id", teamId)
+    .eq("participant_id", participantId)
+    .maybeSingle();
+
+  if (membershipError) {
+    return json({ ok: false, error: membershipError.message }, 500);
+  }
+
+  if (!membership) {
+    return json({ ok: false, error: "This participant is not on that team." }, 404);
+  }
+
+  const { error: deleteError } = await supabase
+    .from("team_memberships")
+    .delete()
+    .eq("team_id", teamId)
+    .eq("participant_id", participantId);
+
+  if (deleteError) {
+    return json({ ok: false, error: deleteError.message }, 500);
+  }
+
+  revalidatePath(`/organizer/event/${eventId}`);
+  revalidatePath(`/organizer/event/${eventId}/unassigned`);
   return json({ ok: true, team: { id: teamId, name: team.name as string } });
 }
 

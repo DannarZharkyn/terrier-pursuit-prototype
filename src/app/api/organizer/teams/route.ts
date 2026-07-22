@@ -69,7 +69,7 @@ export async function POST(request: Request) {
           name: data.name as string,
           code: data.team_code as string,
           memberCount: 0,
-          memberNames: [],
+          members: [],
         },
       });
     }
