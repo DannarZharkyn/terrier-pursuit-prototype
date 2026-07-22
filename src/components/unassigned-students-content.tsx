@@ -134,25 +134,35 @@ export function UnassignedStudentsContent({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ eventId, participantId: member.id, teamId: team.id }),
       });
-      const result = (await response.json()) as { ok: boolean; error?: string };
+      const result = (await response.json()) as { ok: boolean; error?: string; teamDeleted?: boolean };
 
       if (!result.ok) {
         setError(result.error ?? "Could not remove the participant from the team.");
         return;
       }
 
-      setTeams((currentTeams) => currentTeams.map((currentTeam) =>
-        currentTeam.id === team.id
-          ? {
-              ...currentTeam,
-              memberCount: Math.max(0, currentTeam.memberCount - 1),
-              members: currentTeam.members.filter((currentMember) => currentMember.id !== member.id),
-            }
-          : currentTeam,
-      ));
+      setTeams((currentTeams) => result.teamDeleted
+        ? currentTeams.filter((currentTeam) => currentTeam.id !== team.id)
+        : currentTeams.map((currentTeam) =>
+            currentTeam.id === team.id
+              ? {
+                  ...currentTeam,
+                  memberCount: Math.max(0, currentTeam.memberCount - 1),
+                  members: currentTeam.members.filter((currentMember) => currentMember.id !== member.id),
+                }
+              : currentTeam,
+          ),
+      );
+      if (result.teamDeleted) {
+        setExpandedTeamId(undefined);
+      }
       setStudents((currentStudents) => [...currentStudents, member]);
       setSelectedStudentId((currentId) => currentId ?? member.id);
-      setSuccess(`${member.name} was removed from ${team.name} and returned to the unassigned list.`);
+      setSuccess(
+        result.teamDeleted
+          ? `${member.name} was returned to the unassigned list, and the empty ${team.name} team was deleted.`
+          : `${member.name} was removed from ${team.name} and returned to the unassigned list.`,
+      );
     } catch {
       setError("Could not reach the removal service. Please try again.");
     } finally {

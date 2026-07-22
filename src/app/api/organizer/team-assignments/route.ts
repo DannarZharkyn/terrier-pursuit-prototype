@@ -162,9 +162,37 @@ export async function DELETE(request: Request) {
     return json({ ok: false, error: deleteError.message }, 500);
   }
 
+  const { data: remainingMemberships, error: remainingMembershipsError } = await supabase
+    .from("team_memberships")
+    .select("participant_id")
+    .eq("team_id", teamId)
+    .limit(1);
+
+  if (remainingMembershipsError) {
+    return json({ ok: false, error: remainingMembershipsError.message }, 500);
+  }
+
+  const teamDeleted = (remainingMemberships ?? []).length === 0;
+
+  if (teamDeleted) {
+    const { error: teamDeleteError } = await supabase
+      .from("teams")
+      .delete()
+      .eq("id", teamId)
+      .eq("event_id", eventId);
+
+    if (teamDeleteError) {
+      return json({ ok: false, error: teamDeleteError.message }, 500);
+    }
+  }
+
   revalidatePath(`/organizer/event/${eventId}`);
   revalidatePath(`/organizer/event/${eventId}/unassigned`);
-  return json({ ok: true, team: { id: teamId, name: team.name as string } });
+  return json({
+    ok: true,
+    teamDeleted,
+    team: { id: teamId, name: team.name as string },
+  });
 }
 
 function stringValue(value: unknown) {
