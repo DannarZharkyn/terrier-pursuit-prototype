@@ -18,8 +18,15 @@ type TeamRow = {
   id: string;
   name: string;
   memberCount: number;
+  memberNames: string[];
   submissionStatus: string;
   submissionTime: string;
+};
+
+type ParticipantRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
 };
 
 export default async function EventDashboardPage({
@@ -118,7 +125,25 @@ export default async function EventDashboardPage({
                       {team.name}
                     </td>
                     <td className="px-5 py-4 text-gray-600">
-                      {team.memberCount} members
+                      <details className="group w-fit">
+                        <summary className="cursor-pointer list-none rounded-md px-2 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-bu-red [&::-webkit-details-marker]:hidden">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Users className="h-3.5 w-3.5" />
+                            {team.memberCount} members
+                          </span>
+                        </summary>
+                        <div className="mt-2 min-w-36 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+                          {team.memberNames.length ? (
+                            <ul className="space-y-0.5 text-xs font-medium text-gray-700">
+                              {team.memberNames.map((memberName, index) => (
+                                <li key={`${memberName}-${index}`}>{memberName}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-gray-500">No members yet.</p>
+                          )}
+                        </div>
+                      </details>
                     </td>
                     <td className="px-5 py-4">
                       <span className="status-pill bg-bu-soft text-bu-dark">
@@ -169,7 +194,7 @@ async function getEventDashboard(eventId: string) {
 
   const { data: participants, error: participantError } = await supabase
     .from("participants")
-    .select("id")
+    .select("id, first_name, last_name")
     .eq("event_id", eventId);
 
   if (participantError) {
@@ -218,18 +243,31 @@ async function getEventDashboard(eventId: string) {
     throw new Error(`Could not load team requests: ${teamRequestError.message}`);
   }
 
+  const participantRows = (participants ?? []) as unknown as ParticipantRow[];
   const participantIds = new Set(
-    (participants ?? []).map((participant) => participant.id as string),
+    participantRows.map((participant) => participant.id),
   );
   const requestedParticipantCount = (teamRequests ?? []).filter((request) =>
     participantIds.has(request.participant_id as string),
   ).length;
 
   const memberCounts = new Map<string, number>();
+  const memberNames = new Map<string, string[]>();
+  const participantNameById = new Map(
+    participantRows.map((participant) => [
+      participant.id,
+      `${participant.first_name} ${participant.last_name}`,
+    ]),
+  );
 
   for (const membership of memberships.data ?? []) {
     const teamId = membership.team_id as string;
     memberCounts.set(teamId, (memberCounts.get(teamId) ?? 0) + 1);
+    const memberName = participantNameById.get(membership.participant_id as string);
+
+    if (memberName) {
+      memberNames.set(teamId, [...(memberNames.get(teamId) ?? []), memberName]);
+    }
   }
 
   const submissionByTeam = new Map<string, { status: string; submittedAt: string }>();
@@ -252,6 +290,7 @@ async function getEventDashboard(eventId: string) {
       id: team.id as string,
       name: team.name as string,
       memberCount: memberCounts.get(team.id as string) ?? 0,
+      memberNames: memberNames.get(team.id as string) ?? [],
       submissionStatus: submission ? formatStatus(submission.status) : "Not Submitted",
       submissionTime: submission ? formatTime(submission.submittedAt) : "-",
     };
