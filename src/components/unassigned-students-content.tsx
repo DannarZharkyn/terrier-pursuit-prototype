@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, UserPlus, Users, XCircle } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { CheckCircle2, PlusCircle, UserPlus, Users, XCircle } from "lucide-react";
 
 export type UnassignedStudent = {
   id: string;
@@ -30,9 +30,44 @@ export function UnassignedStudentsContent({
   const [teams, setTeams] = useState(initialTeams);
   const [selectedStudentId, setSelectedStudentId] = useState(initialStudents[0]?.id);
   const [assigningTeamId, setAssigningTeamId] = useState<string>();
+  const [teamName, setTeamName] = useState("");
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [success, setSuccess] = useState<string>();
   const [error, setError] = useState<string>();
   const selectedStudent = students.find((student) => student.id === selectedStudentId);
+
+  async function createTeam(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsCreatingTeam(true);
+    setSuccess(undefined);
+    setError(undefined);
+
+    try {
+      const response = await fetch("/api/organizer/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, teamName }),
+      });
+      const result = (await response.json()) as {
+        ok: boolean;
+        error?: string;
+        team?: AvailableTeam;
+      };
+
+      if (!result.ok || !result.team) {
+        setError(result.error ?? "Could not create the team.");
+        return;
+      }
+
+      setTeams((currentTeams) => [...currentTeams, result.team as AvailableTeam]);
+      setTeamName("");
+      setSuccess(`${result.team.name} was created. Its code is ${result.team.code}.`);
+    } catch {
+      setError("Could not reach the create-team service. Please try again.");
+    } finally {
+      setIsCreatingTeam(false);
+    }
+  }
 
   async function assignToTeam(team: AvailableTeam) {
     if (!selectedStudent) {
@@ -126,7 +161,32 @@ export function UnassignedStudentsContent({
             {selectedStudent ? <p className="mt-1 text-sm text-gray-600">{selectedStudent.email}</p> : null}
           </div>
           <div className="grid gap-4 p-5 md:grid-cols-2">
-            {teams.length ? teams.map((team) => (
+            <form className="rounded-lg border border-dashed border-bu-red bg-bu-soft p-5" onSubmit={createTeam}>
+              <PlusCircle className="h-6 w-6 text-bu-red" />
+              <h3 className="mt-3 font-black text-gray-950">Create New Team</h3>
+              <p className="mt-1 text-sm leading-6 text-gray-600">Give the team a name. A unique code will be generated automatically.</p>
+              <label className="mt-4 block">
+                <span className="label">Team Name</span>
+                <input
+                  className="field mt-2 bg-white"
+                  placeholder="Kenmore Crawlers"
+                  value={teamName}
+                  onChange={(event) => setTeamName(event.target.value)}
+                  disabled={isCreatingTeam}
+                  maxLength={80}
+                  required
+                />
+              </label>
+              <button
+                className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+                type="submit"
+                disabled={isCreatingTeam || !teamName.trim()}
+              >
+                {isCreatingTeam ? "Creating..." : "Create Team"}
+              </button>
+            </form>
+
+            {teams.map((team) => (
               <div key={team.id} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -147,7 +207,7 @@ export function UnassignedStudentsContent({
                   {assigningTeamId === team.id ? "Assigning..." : "Assign to This Team"}
                 </button>
               </div>
-            )) : <p className="text-sm text-gray-600">No teams have been created for this event.</p>}
+            ))}
           </div>
         </section>
       </section>
