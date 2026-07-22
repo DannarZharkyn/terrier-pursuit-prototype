@@ -31,6 +31,11 @@ type TeamRow = {
   team_code: string;
 };
 
+type TeamMembershipRow = {
+  team_id: string;
+  participant_id: string;
+};
+
 export default async function UnassignedStudentsPage({
   params,
 }: UnassignedStudentsPageProps) {
@@ -101,7 +106,7 @@ async function getUnassignedPageData(eventId: string) {
   const memberships = teamIds.length
     ? await supabase
         .from("team_memberships")
-        .select("team_id")
+        .select("team_id, participant_id")
         .in("team_id", teamIds)
     : { data: [], error: null };
 
@@ -109,11 +114,37 @@ async function getUnassignedPageData(eventId: string) {
     throw new Error(`Could not load team memberships: ${memberships.error.message}`);
   }
 
-  const memberCounts = new Map<string, number>();
+  const membershipRows = (memberships.data ?? []) as unknown as TeamMembershipRow[];
+  const teamMemberParticipantIds = membershipRows.map((membership) => membership.participant_id);
+  const teamMemberParticipants = teamMemberParticipantIds.length
+    ? await supabase
+        .from("participants")
+        .select("id, first_name, last_name, email")
+        .eq("event_id", eventId)
+        .in("id", teamMemberParticipantIds)
+    : { data: [], error: null };
 
-  for (const membership of memberships.data ?? []) {
-    const teamId = membership.team_id as string;
-    memberCounts.set(teamId, (memberCounts.get(teamId) ?? 0) + 1);
+  if (teamMemberParticipants.error) {
+    throw new Error(`Could not load team members: ${teamMemberParticipants.error.message}`);
+  }
+
+  const memberNamesByParticipantId = new Map(
+    ((teamMemberParticipants.data ?? []) as unknown as ParticipantRow[]).map((participant) => [
+      participant.id,
+      `${participant.first_name} ${participant.last_name}`,
+    ]),
+  );
+  const memberNamesByTeamId = new Map<string, string[]>();
+
+  for (const membership of membershipRows) {
+    const memberName = memberNamesByParticipantId.get(membership.participant_id);
+
+    if (memberName) {
+      memberNamesByTeamId.set(membership.team_id, [
+        ...(memberNamesByTeamId.get(membership.team_id) ?? []),
+        memberName,
+      ]);
+    }
   }
 
   const participantById = new Map(
@@ -145,7 +176,8 @@ async function getUnassignedPageData(eventId: string) {
       id: team.id,
       name: team.name,
       code: team.team_code,
-      memberCount: memberCounts.get(team.id) ?? 0,
+      memberCount: memberNamesByTeamId.get(team.id)?.length ?? 0,
+      memberNames: memberNamesByTeamId.get(team.id) ?? [],
     })),
   };
 }

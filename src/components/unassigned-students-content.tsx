@@ -15,6 +15,7 @@ export type AvailableTeam = {
   name: string;
   code: string;
   memberCount: number;
+  memberNames: string[];
 };
 
 export function UnassignedStudentsContent({
@@ -32,6 +33,7 @@ export function UnassignedStudentsContent({
   const [assigningTeamId, setAssigningTeamId] = useState<string>();
   const [teamName, setTeamName] = useState("");
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  const [expandedTeamId, setExpandedTeamId] = useState<string>();
   const [success, setSuccess] = useState<string>();
   const [error, setError] = useState<string>();
   const selectedStudent = students.find((student) => student.id === selectedStudentId);
@@ -101,7 +103,11 @@ export function UnassignedStudentsContent({
       setTeams((currentTeams) =>
         currentTeams.map((currentTeam) =>
           currentTeam.id === team.id
-            ? { ...currentTeam, memberCount: currentTeam.memberCount + 1 }
+            ? {
+                ...currentTeam,
+                memberCount: currentTeam.memberCount + 1,
+                memberNames: [...currentTeam.memberNames, selectedStudent.name],
+              }
             : currentTeam,
         ),
       );
@@ -195,8 +201,28 @@ export function UnassignedStudentsContent({
                     <p className="mt-3 text-xs font-bold uppercase tracking-wide text-gray-500">Team code</p>
                     <p className="mt-1 font-mono text-base font-black tracking-wider text-bu-dark">{team.code}</p>
                   </div>
-                  <span className="status-pill bg-gray-100 text-gray-700"><Users className="mr-1 h-3 w-3" />{team.memberCount}</span>
+                  <button
+                    className="status-pill shrink-0 bg-gray-100 text-gray-700 transition hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-bu-red"
+                    type="button"
+                    aria-expanded={expandedTeamId === team.id}
+                    aria-label={`${expandedTeamId === team.id ? "Hide" : "Show"} members of ${team.name}`}
+                    onClick={() => setExpandedTeamId((currentId) => currentId === team.id ? undefined : team.id)}
+                  >
+                    <Users className="mr-1 h-3 w-3" />{team.memberCount}
+                  </button>
                 </div>
+                {expandedTeamId === team.id ? (
+                  <div className="mt-4 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-gray-500">Members</p>
+                    {team.memberNames.length ? (
+                      <ul className="mt-1 space-y-0.5 text-xs font-medium text-gray-700">
+                        {team.memberNames.map((memberName) => <li key={memberName}>{memberName}</li>)}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 text-xs text-gray-500">No members yet.</p>
+                    )}
+                  </div>
+                ) : null}
                 <button
                   className="btn-primary mt-5 w-full disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
                   type="button"
