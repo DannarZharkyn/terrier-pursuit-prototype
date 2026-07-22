@@ -65,13 +65,16 @@ export function CreateEventForm() {
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             <input
               className="field"
-              placeholder="MM/DD/YYYY"
+              type="date"
+              aria-label="Event start date"
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
             />
             <input
               className="field"
-              placeholder="10:00 AM"
+              type="time"
+              step="300"
+              aria-label="Event start time"
               value={startTime}
               onChange={(event) => setStartTime(event.target.value)}
             />
@@ -82,13 +85,16 @@ export function CreateEventForm() {
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             <input
               className="field"
-              placeholder="MM/DD/YYYY"
+              type="date"
+              aria-label="Submission deadline date"
               value={submissionDate}
               onChange={(event) => setSubmissionDate(event.target.value)}
             />
             <input
               className="field"
-              placeholder="1:30 PM"
+              type="time"
+              step="300"
+              aria-label="Submission deadline time"
               value={submissionTime}
               onChange={(event) => setSubmissionTime(event.target.value)}
             />
@@ -126,7 +132,7 @@ export function CreateEventForm() {
               Review & Publish
             </button>
             <p className="max-w-2xl text-sm font-semibold leading-6 text-gray-500 sm:text-right">
-              Complete all event fields using MM/DD/YYYY and AM/PM time, then upload valid participant and locations files to continue.
+              Complete all event fields with the date and time pickers, then upload valid participant and locations files to continue.
             </p>
           </>
         )}
@@ -136,39 +142,32 @@ export function CreateEventForm() {
 }
 
 function toLocalIsoDateTime(dateText: string, timeText: string) {
-  const dateMatch = dateText.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  const timeMatch = timeText
-    .trim()
-    .match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
+  const dateMatch = dateText.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const timeMatch = timeText.trim().match(/^(\d{2}):(\d{2})$/);
 
   if (!dateMatch || !timeMatch) {
     return "";
   }
 
-  const month = Number(dateMatch[1]);
-  const day = Number(dateMatch[2]);
-  const year = Number(dateMatch[3]);
-  const hour12 = Number(timeMatch[1]);
+  const year = Number(dateMatch[1]);
+  const month = Number(dateMatch[2]);
+  const day = Number(dateMatch[3]);
+  const hour = Number(timeMatch[1]);
   const minute = Number(timeMatch[2]);
-  const period = timeMatch[3].toUpperCase();
 
   if (
     month < 1 ||
     month > 12 ||
     day < 1 ||
     day > 31 ||
-    hour12 < 1 ||
-    hour12 > 12 ||
-    minute > 59
+    hour < 0 ||
+    hour > 23 ||
+    minute > 59 ||
+    minute % 5 !== 0
   ) {
     return "";
   }
 
-  const hour = period === "PM" && hour12 !== 12
-    ? hour12 + 12
-    : period === "AM" && hour12 === 12
-      ? 0
-      : hour12;
   const date = new Date(year, month - 1, day, hour, minute);
 
   if (
