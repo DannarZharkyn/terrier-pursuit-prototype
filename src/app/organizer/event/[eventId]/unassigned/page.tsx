@@ -13,11 +13,6 @@ type UnassignedStudentsPageProps = {
   };
 };
 
-type TeamRequestRow = {
-  participant_id: string;
-  requested_at: string;
-};
-
 type ParticipantRow = {
   id: string;
   first_name: string;
@@ -44,7 +39,7 @@ export default async function UnassignedStudentsPage({
   return (
     <OrganizerShell
       title="Unassigned Students"
-      subtitle="Review participants who asked the organizer to place them into a team."
+      subtitle="Review every participant in this event who is not currently on a team."
     >
       <div className="mb-6">
         <Link
@@ -66,27 +61,12 @@ export default async function UnassignedStudentsPage({
 
 async function getUnassignedPageData(eventId: string) {
   const supabase = createSupabaseAdminClient();
-  const { data: requests, error: requestError } = await supabase
-    .from("participant_team_requests")
-    .select("participant_id, requested_at")
+  const participants = await supabase
+    .from("participants")
+    .select("id, first_name, last_name, email")
     .eq("event_id", eventId)
-    .order("requested_at", { ascending: true });
-
-  if (requestError) {
-    throw new Error(`Could not load team requests: ${requestError.message}`);
-  }
-
-  const requestRows = (requests ?? []) as unknown as TeamRequestRow[];
-  const requestedParticipantIds = requestRows.map(
-    (request) => request.participant_id,
-  );
-  const participants = requestedParticipantIds.length
-    ? await supabase
-        .from("participants")
-        .select("id, first_name, last_name, email")
-        .eq("event_id", eventId)
-        .in("id", requestedParticipantIds)
-    : { data: [], error: null };
+    .order("last_name", { ascending: true })
+    .order("first_name", { ascending: true });
 
   if (participants.error) {
     throw new Error(`Could not load participants: ${participants.error.message}`);
@@ -115,28 +95,18 @@ async function getUnassignedPageData(eventId: string) {
   }
 
   const membershipRows = (memberships.data ?? []) as unknown as TeamMembershipRow[];
-  const teamMemberParticipantIds = membershipRows.map((membership) => membership.participant_id);
-  const teamMemberParticipants = teamMemberParticipantIds.length
-    ? await supabase
-        .from("participants")
-        .select("id, first_name, last_name, email")
-        .eq("event_id", eventId)
-        .in("id", teamMemberParticipantIds)
-    : { data: [], error: null };
-
-  if (teamMemberParticipants.error) {
-    throw new Error(`Could not load team members: ${teamMemberParticipants.error.message}`);
-  }
-
+  const participantRows = (participants.data ?? []) as unknown as ParticipantRow[];
   const memberNamesByParticipantId = new Map(
-    ((teamMemberParticipants.data ?? []) as unknown as ParticipantRow[]).map((participant) => [
+    participantRows.map((participant) => [
       participant.id,
       `${participant.first_name} ${participant.last_name}`,
     ]),
   );
   const memberNamesByTeamId = new Map<string, string[]>();
+  const assignedParticipantIds = new Set<string>();
 
   for (const membership of membershipRows) {
+    assignedParticipantIds.add(membership.participant_id);
     const memberName = memberNamesByParticipantId.get(membership.participant_id);
 
     if (memberName) {
@@ -147,31 +117,14 @@ async function getUnassignedPageData(eventId: string) {
     }
   }
 
-  const participantById = new Map(
-    ((participants.data ?? []) as unknown as ParticipantRow[]).map(
-      (participant) => [participant.id, participant],
-    ),
-  );
-
   return {
-    students: requestRows
-      .map((request) => {
-        const participant = participantById.get(request.participant_id);
-
-        if (!participant) {
-          return undefined;
-        }
-
-        return {
-          id: participant.id,
-          name: `${participant.first_name} ${participant.last_name}`,
-          email: participant.email,
-          requestedAt: formatTime(request.requested_at),
-        };
-      })
-      .filter((student): student is NonNullable<typeof student> =>
-        Boolean(student),
-      ),
+    students: participantRows
+      .filter((participant) => !assignedParticipantIds.has(participant.id))
+      .map((participant) => ({
+        id: participant.id,
+        name: `${participant.first_name} ${participant.last_name}`,
+        email: participant.email,
+      })),
     teams: ((teams ?? []) as unknown as TeamRow[]).map((team) => ({
       id: team.id,
       name: team.name,
@@ -180,11 +133,4 @@ async function getUnassignedPageData(eventId: string) {
       memberNames: memberNamesByTeamId.get(team.id) ?? [],
     })),
   };
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
 }

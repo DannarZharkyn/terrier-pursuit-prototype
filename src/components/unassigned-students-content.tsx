@@ -7,7 +7,6 @@ export type UnassignedStudent = {
   id: string;
   name: string;
   email: string;
-  requestedAt: string;
 };
 
 export type AvailableTeam = {
@@ -146,12 +145,9 @@ export function UnassignedStudentsContent({
                 type="button"
                 onClick={() => { setSelectedStudentId(student.id); setSuccess(undefined); setError(undefined); }}
               >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="font-bold text-gray-950">{student.name}</p>
-                    <p className="mt-1 text-sm text-gray-600">{student.email}</p>
-                  </div>
-                  <span className="text-xs font-semibold text-gray-500">{student.requestedAt}</span>
+                <div className="min-w-0">
+                  <p className="font-bold text-gray-950">{student.name}</p>
+                  <p className="mt-1 text-sm text-gray-600">{student.email}</p>
                 </div>
               </button>
             )) : (

@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, UserPlus, Users, XCircle } from "lucide-react";
+import { Info, UserPlus, Users, XCircle } from "lucide-react";
 import { ParticipantTeamCard } from "@/components/participant-team-card";
-import type { ParticipantTeamRequestResponse } from "@/lib/participant-team-requests/types";
 import type {
   CurrentTeamResponse,
   ParticipantTeam,
@@ -55,28 +54,6 @@ export function TeamOptionsContent() {
       }
 
       setTeam(result.team);
-
-      if (!result.team) {
-        const requestParams = new URLSearchParams({
-          eventId: storedSession.event.id,
-          participantId: storedSession.participant.id,
-        });
-        const requestResponse = await fetch(
-          `/api/participant/team-request?${requestParams.toString()}`,
-        );
-        const requestResult =
-          (await requestResponse.json()) as ParticipantTeamRequestResponse;
-
-        if (!requestResult.ok) {
-          setError(requestResult.error);
-          setDetails(requestResult.details);
-          return;
-        }
-
-        if (requestResult.request) {
-          router.replace("/participant/find-team");
-        }
-      }
     } catch {
       setError("Could not load your team. Please refresh and try again.");
     } finally {
@@ -110,8 +87,7 @@ export function TeamOptionsContent() {
           How would you like to join?
         </h2>
         <p className="mt-2 text-sm leading-6 text-gray-600">
-          Create a new team, join friends with a team code, or let the
-          organizer place you with other participants.
+          Create a new team or join an existing team with a team code.
         </p>
       </section>
 
@@ -140,10 +116,13 @@ export function TeamOptionsContent() {
           <Users className="h-4 w-4" />
           Join Existing Team
         </Link>
-        <Link href="/participant/find-team" className="btn-secondary">
-          <Search className="h-4 w-4" />
-          Find Me a Team
-        </Link>
+      </div>
+
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+        <div className="flex items-start gap-2">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>If you do not create or join a team, no action is needed. The organizer will assign you to a team.</p>
+        </div>
       </div>
     </div>
   );

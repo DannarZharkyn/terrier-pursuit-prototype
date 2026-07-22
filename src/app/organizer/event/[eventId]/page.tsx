@@ -234,21 +234,15 @@ async function getEventDashboard(eventId: string) {
     throw new Error(`Could not load submissions: ${submissions.error.message}`);
   }
 
-  const { data: teamRequests, error: teamRequestError } = await supabase
-    .from("participant_team_requests")
-    .select("participant_id")
-    .eq("event_id", eventId);
-
-  if (teamRequestError) {
-    throw new Error(`Could not load team requests: ${teamRequestError.message}`);
-  }
-
   const participantRows = (participants ?? []) as unknown as ParticipantRow[];
   const participantIds = new Set(
     participantRows.map((participant) => participant.id),
   );
-  const requestedParticipantCount = (teamRequests ?? []).filter((request) =>
-    participantIds.has(request.participant_id as string),
+  const assignedParticipantIds = new Set(
+    (memberships.data ?? []).map((membership) => membership.participant_id as string),
+  );
+  const unassignedParticipantCount = [...participantIds].filter(
+    (participantId) => !assignedParticipantIds.has(participantId),
   ).length;
 
   const memberCounts = new Map<string, number>();
@@ -301,7 +295,7 @@ async function getEventDashboard(eventId: string) {
     gameCode: (event.game_code as string | null) ?? "Not published",
     participantCount: String(participants?.length ?? 0),
     teamCount: String(teamRows.length),
-    unassignedCount: String(requestedParticipantCount),
+    unassignedCount: String(unassignedParticipantCount),
     submittedTeamCount: String(submissionByTeam.size),
     teams: teamRows,
   };
