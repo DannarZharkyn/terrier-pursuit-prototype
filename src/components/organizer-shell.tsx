@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { LayoutDashboard, PlusCircle } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { Logo } from "./logo";
 
 const navItems = [
   { href: "/organizer/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/organizer/create-event", label: "Create Event", icon: PlusCircle },
 ];
 
 export function OrganizerShell({
@@ -42,7 +41,7 @@ export function OrganizerShell({
             <div>
               <div className="mb-5 lg:hidden">
                 <Logo href="/organizer/dashboard" />
-                <nav className="mt-5 grid grid-cols-2 gap-2" aria-label="Organizer navigation">
+                <nav className="mt-5 grid gap-2" aria-label="Organizer navigation">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     return (
