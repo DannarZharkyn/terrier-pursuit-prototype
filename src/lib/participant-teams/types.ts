@@ -50,7 +50,8 @@ export type JoinTeamSuccess = {
 
 export type DeleteTeamSuccess = {
   ok: true;
-  deletedTeamId: string;
+  leftTeamId: string;
+  teamDeleted: boolean;
 };
 
 export type TeamApiFailure = {

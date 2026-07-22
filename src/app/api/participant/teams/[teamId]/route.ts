@@ -10,7 +10,6 @@ const uuidPattern =
 type TeamRow = {
   id: string;
   event_id: string;
-  created_by_participant_id: string | null;
 };
 
 type ParticipantRow = {
@@ -53,7 +52,7 @@ export async function DELETE(
   const [teamResult, participantResult] = await Promise.all([
     supabase
       .from("teams")
-      .select("id, event_id, created_by_participant_id")
+      .select("id, event_id")
       .eq("id", teamId),
     supabase
       .from("participants")
@@ -83,37 +82,70 @@ export async function DELETE(
   const team = teams[0];
   const participant = participants[0];
 
-  if (
-    team.created_by_participant_id !== validation.data.participantId ||
-    team.event_id !== participant.event_id
-  ) {
+  if (team.event_id !== participant.event_id) {
     return json(
       {
         ok: false,
-        error: "Only the team creator can delete this team.",
+        error: "The participant and team must belong to the same event.",
       },
-      403,
+      400,
     );
   }
 
-  const { error, count } = await supabase
-    .from("teams")
-    .delete({ count: "exact" })
-    .eq("id", teamId);
+  const { data: membership, error: membershipLookupError } = await supabase
+    .from("team_memberships")
+    .select("team_id")
+    .eq("team_id", teamId)
+    .eq("participant_id", validation.data.participantId)
+    .maybeSingle();
 
-  if (error) {
-    return json({ ok: false, error: error.message }, 500);
+  if (membershipLookupError) {
+    return json({ ok: false, error: membershipLookupError.message }, 500);
   }
 
-  if (count === 0) {
-    return json({ ok: false, error: "Team was not found." }, 404);
+  if (!membership) {
+    return json({ ok: false, error: "You are not a member of this team." }, 404);
+  }
+
+  const { error: membershipDeleteError } = await supabase
+    .from("team_memberships")
+    .delete()
+    .eq("team_id", teamId)
+    .eq("participant_id", validation.data.participantId);
+
+  if (membershipDeleteError) {
+    return json({ ok: false, error: membershipDeleteError.message }, 500);
+  }
+
+  const { data: remainingMemberships, error: remainingMembershipsError } = await supabase
+    .from("team_memberships")
+    .select("participant_id")
+    .eq("team_id", teamId)
+    .limit(1);
+
+  if (remainingMembershipsError) {
+    return json({ ok: false, error: remainingMembershipsError.message }, 500);
+  }
+
+  const teamDeleted = (remainingMemberships ?? []).length === 0;
+
+  if (teamDeleted) {
+    const { error: teamDeleteError } = await supabase
+      .from("teams")
+      .delete()
+      .eq("id", teamId);
+
+    if (teamDeleteError) {
+      return json({ ok: false, error: teamDeleteError.message }, 500);
+    }
   }
 
   revalidatePath("/participant/team-options");
   revalidatePath("/participant/team");
   revalidatePath(`/organizer/event/${team.event_id}`);
+  revalidatePath(`/organizer/event/${team.event_id}/unassigned`);
 
-  return json({ ok: true, deletedTeamId: teamId });
+  return json({ ok: true, leftTeamId: teamId, teamDeleted });
 }
 
 function json(response: DeleteTeamResponse, status = 200) {
