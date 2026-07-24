@@ -1,7 +1,7 @@
-import { FolderOpen, ImageIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { OrganizerShell } from "@/components/organizer-shell";
+import { OrganizerTeamReviewContent } from "@/components/organizer-team-review-content";
 import { PageBackLink } from "@/components/page-back-link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -31,68 +31,7 @@ export default async function TeamReviewPage({
           label="Back to Event"
         />
       </div>
-      <section className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <aside className="card p-5">
-          <h2 className="text-xl font-black text-gray-950">{team.name}</h2>
-          <p className="mt-5 text-sm font-semibold text-gray-500">Members</p>
-          <ul className="mt-3 space-y-2">
-            {team.members.map((member) => (
-              <li
-                key={member.id}
-                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700"
-              >
-                {member.name}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4">
-            <div className="flex items-center gap-3">
-              <FolderOpen className="h-5 w-5 text-bu-red" />
-              <div>
-                <p className="text-sm font-bold text-gray-950">Submitted Pictures</p>
-                <p className="text-xs text-gray-500">
-                  {team.photos.length} file{team.photos.length === 1 ? "" : "s"}
-                </p>
-              </div>
-            </div>
-          </div>
-          <p className="mt-4 text-xs font-semibold text-gray-500">
-            Status: {team.status}
-          </p>
-        </aside>
-        <div className="card p-5">
-          {team.photos.length ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {team.photos.map((photo) => (
-                <a
-                  key={photo.id}
-                  href={photo.signedUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group overflow-hidden rounded-lg border border-gray-200 bg-white"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photo.signedUrl}
-                    alt={photo.originalName}
-                    className="aspect-square w-full object-cover transition group-hover:scale-[1.02]"
-                  />
-                  <p className="truncate px-3 py-2 text-xs font-semibold text-gray-600">
-                    {photo.originalName}
-                  </p>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div className="flex min-h-64 flex-col items-center justify-center text-center">
-              <ImageIcon className="h-10 w-10 text-gray-300" />
-              <p className="mt-3 text-sm font-semibold text-gray-600">
-                This team has not submitted pictures yet.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+      <OrganizerTeamReviewContent team={team} />
     </OrganizerShell>
   );
 }
@@ -111,7 +50,7 @@ async function getTeamReview(teamId: string) {
 
   const memberships = await supabase
     .from("team_memberships")
-    .select("participants(id, first_name, last_name)")
+    .select("participants(id, first_name, last_name, email)")
     .eq("team_id", teamId);
   const submission = await supabase
     .from("team_hunt_submissions")
@@ -157,6 +96,7 @@ async function getTeamReview(teamId: string) {
       return participant ? [{
         id: participant.id as string,
         name: `${participant.first_name} ${participant.last_name}`,
+        email: participant.email as string,
       }] : [];
     }),
     photos: photoRows.map((photo, index) => ({
