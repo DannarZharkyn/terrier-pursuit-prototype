@@ -84,54 +84,58 @@ export function ParticipantHomeContent() {
           <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Current Game</p>
           <h2 className="mt-1 text-xl font-black text-gray-950">{session.event.name}</h2>
         </section>
-        <section className="rounded-lg bg-bu-red p-5 text-white shadow-soft">
-          <div className="flex items-center gap-3">
-            <Timer className="h-6 w-6" />
-            <p className="text-sm font-semibold text-red-50">
+        <div className={`grid gap-3 ${hasStarted ? "grid-cols-1 min-[430px]:grid-cols-2" : "grid-cols-1"}`}>
+          <section className="rounded-lg bg-bu-red p-4 text-white shadow-soft">
+            <div className="flex items-center gap-2">
+              <Timer className="h-5 w-5 shrink-0" />
+              <p className="text-xs font-semibold text-red-50 sm:text-sm">
+                {!hasValidStartTime
+                  ? "Start time not set"
+                  : hasStarted
+                    ? "Game status"
+                    : "Until game starts"}
+              </p>
+            </div>
+            <p className="mt-3 text-2xl font-black tabular-nums tracking-normal sm:text-3xl">
               {!hasValidStartTime
-                ? "Start time not set"
+                ? "--:--:--"
                 : hasStarted
-                  ? "Game has started"
-                  : "Countdown until game begins"}
+                  ? "Game started"
+                  : formatCountdown(remainingMs)}
             </p>
-          </div>
-          <p className="mt-4 text-3xl font-black tabular-nums tracking-normal min-[360px]:text-4xl">
-            {!hasValidStartTime
-              ? "--:--:--"
-              : hasStarted
-                ? "Game started"
-                : formatCountdown(remainingMs)}
-          </p>
-          {hasValidStartTime ? (
-            <p className="mt-3 text-sm font-semibold text-red-50">
-              Starts {formatUsDateTime(session.event.startsAt)}
-            </p>
+            {hasValidStartTime ? (
+              <p className="mt-2 text-xs font-semibold text-red-50">
+                Starts {formatUsDateTime(session.event.startsAt)}
+              </p>
+            ) : null}
+          </section>
+          {hasStarted ? (
+            <section className="rounded-lg bg-bu-dark p-4 text-white shadow-soft">
+              <div className="flex items-center gap-2">
+                <Timer className="h-5 w-5 shrink-0" />
+                <p className="text-xs font-semibold text-red-50 sm:text-sm">
+                  {!hasValidSubmissionDeadline
+                    ? "Deadline not set"
+                    : submissionClosed
+                      ? "Deadline reached"
+                      : "Until submission"}
+                </p>
+              </div>
+              <p className="mt-3 text-2xl font-black tabular-nums tracking-normal sm:text-3xl">
+                {!hasValidSubmissionDeadline
+                  ? "--:--:--"
+                  : submissionClosed
+                    ? "Time ended"
+                    : formatCountdown(submissionRemainingMs)}
+              </p>
+              {hasValidSubmissionDeadline ? (
+                <p className="mt-2 text-xs font-semibold text-red-50">
+                  Submit by {formatUsDateTime(session.event.submissionDeadline)}
+                </p>
+              ) : null}
+            </section>
           ) : null}
-        </section>
-        <section className="rounded-lg bg-gray-950 p-5 text-white shadow-soft">
-          <div className="flex items-center gap-3">
-            <Timer className="h-6 w-6" />
-            <p className="text-sm font-semibold text-gray-200">
-              {!hasValidSubmissionDeadline
-                ? "Submission deadline not set"
-                : submissionClosed
-                  ? "Submission deadline reached"
-                  : "Time until submission deadline"}
-            </p>
-          </div>
-          <p className="mt-4 text-3xl font-black tabular-nums tracking-normal min-[360px]:text-4xl">
-            {!hasValidSubmissionDeadline
-              ? "--:--:--"
-              : submissionClosed
-                ? "Time ended"
-                : formatCountdown(submissionRemainingMs)}
-          </p>
-          {hasValidSubmissionDeadline ? (
-            <p className="mt-3 text-sm font-semibold text-gray-200">
-              Submit by {formatUsDateTime(session.event.submissionDeadline)}
-            </p>
-          ) : null}
-        </section>
+        </div>
         <section className="card p-5">
           <h2 className="text-lg font-black text-gray-950">Rules of the Road</h2>
           <p className="mt-4 whitespace-pre-line text-sm leading-6 text-gray-600">
