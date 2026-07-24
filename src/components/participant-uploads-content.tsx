@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { ImagePlus, Send, XCircle } from "lucide-react";
+import { CheckCircle2, ImagePlus, Send, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ParticipantShell } from "@/components/participant-shell";
 import { readParticipantSession } from "@/lib/participant-session";
@@ -13,6 +13,7 @@ export function ParticipantUploadsContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [team, setTeam] = useState<ParticipantTeam | null>();
   const [submissionChecked, setSubmissionChecked] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>();
@@ -66,7 +67,8 @@ export function ParticipantUploadsContent() {
             }
 
             if (submission.submitted) {
-              router.replace("/participant/uploads/submitted");
+              setSubmitted(true);
+              setSubmissionChecked(true);
               return;
             }
 
@@ -162,7 +164,9 @@ export function ParticipantUploadsContent() {
         throw new Error(finalized.error || "Could not finalize the submission.");
       }
 
-      router.push("/participant/uploads/submitted");
+      setSubmitted(true);
+      setSubmissionChecked(true);
+      setFiles([]);
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -181,6 +185,23 @@ export function ParticipantUploadsContent() {
         <div className="card p-5 text-sm font-semibold text-gray-600">
           Loading your team folder...
         </div>
+      </ParticipantShell>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <ParticipantShell title="Game Complete">
+        <section className="card p-6 text-center">
+          <CheckCircle2 className="mx-auto h-14 w-14 text-bu-red" />
+          <h2 className="mt-5 text-2xl font-black text-gray-950">
+            Your hunt is under review
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-gray-600">
+            Thank you for participating. All selected team pictures were
+            submitted together and are ready for organizer review.
+          </p>
+        </section>
       </ParticipantShell>
     );
   }
