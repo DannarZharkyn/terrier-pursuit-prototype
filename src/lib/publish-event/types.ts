@@ -29,6 +29,11 @@ export type PublishEventSuccess = {
   gameCode: string;
   participantCount: number;
   locationCount: number;
+  email: {
+    status: "completed" | "not_configured";
+    sentCount: number;
+    failedCount: number;
+  };
 };
 
 export type PublishEventFailure = {

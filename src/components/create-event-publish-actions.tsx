@@ -128,9 +128,23 @@ export function CreateEventPublishActions() {
               <dd>{success.locationCount}</dd>
             </div>
           </dl>
-          <p className="mt-3 text-sm leading-6 text-green-900">
-            No emails were sent. This step only saved the event data to Supabase.
-          </p>
+          {success.email.status === "not_configured" ? (
+            <p className="mt-3 text-sm font-semibold leading-6 text-amber-800">
+              Event data was saved, but invitation email is not configured yet.
+            </p>
+          ) : (
+            <div className="mt-3 rounded-lg border border-green-200 bg-white/60 p-3 text-sm text-green-900">
+              <p className="font-bold">Invitation emails</p>
+              <p className="mt-1">
+                {success.email.sentCount} sent · {success.email.failedCount} failed
+              </p>
+              {success.email.failedCount > 0 ? (
+                <p className="mt-2 text-xs font-semibold text-amber-800">
+                  The event is safely published. Failed invitations are recorded for retry.
+                </p>
+              ) : null}
+            </div>
+          )}
           <div className="mt-4 border-t border-green-200 pt-4">
             <button
               className="text-sm font-bold text-red-700 underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:text-gray-500"
