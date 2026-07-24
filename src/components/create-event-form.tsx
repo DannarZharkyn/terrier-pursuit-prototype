@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FileSpreadsheet } from "lucide-react";
 import { EventLocationsUpload } from "@/components/event-locations-upload";
 import { ParticipantListUpload } from "@/components/participant-list-upload";
+import { TimePicker12 } from "@/components/time-picker-12";
 import { saveCreateEventDraft } from "@/lib/imports/create-event-draft";
 import type { EventLocationImportResult } from "@/lib/imports/event-locations";
 import type { ParticipantImportResult } from "@/lib/imports/participants";
@@ -70,13 +71,10 @@ export function CreateEventForm() {
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
             />
-            <input
-              className="field"
-              type="time"
-              step="300"
-              aria-label="Event start time"
+            <TimePicker12
+              label="Event start time"
               value={startTime}
-              onChange={(event) => setStartTime(event.target.value)}
+              onChange={setStartTime}
             />
           </div>
         </fieldset>
@@ -90,13 +88,10 @@ export function CreateEventForm() {
               value={submissionDate}
               onChange={(event) => setSubmissionDate(event.target.value)}
             />
-            <input
-              className="field"
-              type="time"
-              step="300"
-              aria-label="Submission deadline time"
+            <TimePicker12
+              label="Submission deadline time"
               value={submissionTime}
-              onChange={(event) => setSubmissionTime(event.target.value)}
+              onChange={setSubmissionTime}
             />
           </div>
         </fieldset>

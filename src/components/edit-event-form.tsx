@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Save, XCircle } from "lucide-react";
+import { TimePicker12 } from "@/components/time-picker-12";
 
 type EditableEvent = {
   id: string;
@@ -89,14 +90,10 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
             onChange={(inputEvent) => setStartDate(inputEvent.target.value)}
             required
           />
-          <input
-            className="field"
-            type="time"
-            step="300"
-            aria-label="Game start time"
+          <TimePicker12
+            label="Game start time"
             value={startTime}
-            onChange={(inputEvent) => setStartTime(inputEvent.target.value)}
-            required
+            onChange={setStartTime}
           />
         </div>
       </fieldset>
@@ -112,14 +109,10 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
             onChange={(inputEvent) => setSubmissionDate(inputEvent.target.value)}
             required
           />
-          <input
-            className="field"
-            type="time"
-            step="300"
-            aria-label="Submission deadline time"
+          <TimePicker12
+            label="Submission deadline time"
             value={submissionTime}
-            onChange={(inputEvent) => setSubmissionTime(inputEvent.target.value)}
-            required
+            onChange={setSubmissionTime}
           />
         </div>
       </fieldset>
