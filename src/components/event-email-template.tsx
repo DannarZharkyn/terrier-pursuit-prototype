@@ -30,9 +30,6 @@ export function EventEmailTemplate({
         <Mail className="mt-0.5 h-5 w-5 shrink-0 text-bu-red" />
         <div>
           <h2 className="text-lg font-black text-gray-950">Participant Invitation Email</h2>
-          <p className="mt-1 text-sm leading-6 text-gray-600">
-            Copy the recipients into Gmail&apos;s BCC field, then copy and edit the subject and message.
-          </p>
         </div>
       </div>
 
@@ -100,7 +97,7 @@ function CopyField({
           onClick={onCopy}
         >
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-          {copied ? "Copied" : `Copy ${label}`}
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
       {multiline ? (

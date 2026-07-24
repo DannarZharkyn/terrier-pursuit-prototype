@@ -156,12 +156,7 @@ export default async function EventDashboardPage({
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-3">
             <Mail className="h-5 w-5 text-bu-red" />
-            <span>
-              <span className="block font-black text-gray-950">Participant Invitation Email</span>
-              <span className="mt-0.5 block text-xs font-semibold text-gray-500">
-                Show the saved BCC list, subject, and message
-              </span>
-            </span>
+            <span className="font-black text-gray-950">Participant Invitation Email</span>
           </span>
           <ChevronDown className="h-5 w-5 shrink-0 text-gray-500 transition group-open:rotate-180" />
         </summary>
