@@ -1,18 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { ImagePlus, Send, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ParticipantShell } from "@/components/participant-shell";
 import { readParticipantSession } from "@/lib/participant-session";
 import type { CurrentTeamResponse, ParticipantTeam } from "@/lib/participant-teams/types";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function ParticipantUploadsContent() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [team, setTeam] = useState<ParticipantTeam | null>();
   const [files, setFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>();
   const [error, setError] = useState<string>();
 
   useEffect(() => {
@@ -42,6 +44,98 @@ export function ParticipantUploadsContent() {
 
   function selectFiles(event: ChangeEvent<HTMLInputElement>) {
     setFiles(Array.from(event.target.files ?? []));
+    setError(undefined);
+  }
+
+  async function submitPictures() {
+    const session = readParticipantSession();
+
+    if (!session || !team) {
+      router.replace("/participant/welcome");
+      return;
+    }
+
+    if (files.length === 0) {
+      setError("Select at least one picture before submitting.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(undefined);
+
+    try {
+      setUploadProgress("Preparing secure uploads...");
+      const prepareResponse = await fetch("/api/participant/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "prepare",
+          teamId: team.id,
+          participantId: session.participant.id,
+          files: files.map(fileDetails),
+        }),
+      });
+      const prepared = (await prepareResponse.json()) as {
+        ok: boolean;
+        uploads?: { path: string; token: string }[];
+        error?: string;
+      };
+
+      if (!prepared.ok || !prepared.uploads) {
+        throw new Error(prepared.error || "Could not prepare the uploads.");
+      }
+
+      const supabase = createSupabaseBrowserClient();
+      const uploadedFiles = [];
+
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
+        const upload = prepared.uploads[index];
+        setUploadProgress(`Uploading picture ${index + 1} of ${files.length}...`);
+        const result = await supabase.storage
+          .from("game-submissions")
+          .uploadToSignedUrl(upload.path, upload.token, file, {
+            contentType: file.type,
+          });
+
+        if (result.error) {
+          throw new Error(result.error.message);
+        }
+
+        uploadedFiles.push({ ...fileDetails(file), path: upload.path });
+      }
+
+      setUploadProgress("Saving team submission...");
+      const finalizeResponse = await fetch("/api/participant/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "finalize",
+          teamId: team.id,
+          participantId: session.participant.id,
+          files: uploadedFiles,
+        }),
+      });
+      const finalized = (await finalizeResponse.json()) as {
+        ok: boolean;
+        error?: string;
+      };
+
+      if (!finalized.ok) {
+        throw new Error(finalized.error || "Could not finalize the submission.");
+      }
+
+      router.push("/participant/uploads/submitted");
+    } catch (submissionError) {
+      setError(
+        submissionError instanceof Error
+          ? submissionError.message
+          : "Could not submit the pictures.",
+      );
+    } finally {
+      setIsSubmitting(false);
+      setUploadProgress(undefined);
+    }
   }
 
   if (team === undefined && !error) {
@@ -76,7 +170,7 @@ export function ParticipantUploadsContent() {
                 ref={fileInputRef}
                 className="sr-only"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
                 multiple
                 onChange={selectFiles}
               />
@@ -95,13 +189,18 @@ export function ParticipantUploadsContent() {
             </section>
 
             <div className="rounded-lg bg-red-50 p-4 text-sm leading-6 text-red-900">
-              All selected pictures will be submitted together. There is no required minimum number.
+              All selected pictures will be submitted together. There is no fixed required number.
             </div>
 
-            <Link href="/participant/uploads/confirm" className="btn-primary w-full">
+            <button
+              type="button"
+              className="btn-primary w-full disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+              disabled={isSubmitting || files.length === 0}
+              onClick={submitPictures}
+            >
               <Send className="h-4 w-4" />
-              Submit All Pictures
-            </Link>
+              {isSubmitting ? uploadProgress || "Submitting..." : "Submit All Pictures"}
+            </button>
           </>
         ) : (
           <div className="card p-5 text-sm leading-6 text-gray-600">
@@ -118,4 +217,12 @@ export function ParticipantUploadsContent() {
       </div>
     </ParticipantShell>
   );
+}
+
+function fileDetails(file: File) {
+  return {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+  };
 }

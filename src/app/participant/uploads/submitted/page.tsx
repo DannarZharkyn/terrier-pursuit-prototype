@@ -10,8 +10,8 @@ export default function HuntSubmittedPage() {
           Your hunt is under review
         </h2>
         <p className="mt-3 text-sm leading-6 text-gray-600">
-          Thank you for participating. Your team has submitted the hunt and the
-          game is over.
+          Thank you for participating. All selected team pictures were
+          submitted together and are ready for organizer review.
         </p>
       </section>
     </ParticipantShell>

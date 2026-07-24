@@ -332,7 +332,7 @@ async function getEventDashboard(eventId: string) {
 
   const submissions = teamIds.length
     ? await supabase
-        .from("submissions")
+        .from("team_hunt_submissions")
         .select("team_id, status, submitted_at")
         .in("team_id", teamIds)
     : { data: [], error: null };
