@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
-import { ArrowRight, CalendarCheck, CalendarClock, Clock, ClipboardCheck, MapPinned, Pencil, ScrollText, UserMinus, Users } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarClock, ChevronDown, Clock, ClipboardCheck, Mail, MapPinned, Pencil, ScrollText, UserMinus, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { EventEmailTemplate } from "@/components/event-email-template";
@@ -108,13 +108,27 @@ export default async function EventDashboardPage({
           <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-700">{dashboard.rules}</p>
         </div>
       </section>
-      <div className="mb-8">
-        <EventEmailTemplate
-          recipients={dashboard.emailRecipients}
-          subject={dashboard.emailSubject}
-          body={dashboard.emailBody}
-        />
-      </div>
+      <details className="group mb-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-3">
+            <Mail className="h-5 w-5 text-bu-red" />
+            <span>
+              <span className="block font-black text-gray-950">Participant Invitation Email</span>
+              <span className="mt-0.5 block text-xs font-semibold text-gray-500">
+                Show the saved BCC list, subject, and message
+              </span>
+            </span>
+          </span>
+          <ChevronDown className="h-5 w-5 shrink-0 text-gray-500 transition group-open:rotate-180" />
+        </summary>
+        <div className="border-t border-gray-200 bg-gray-50 p-3 sm:p-4">
+          <EventEmailTemplate
+            recipients={dashboard.emailRecipients}
+            subject={dashboard.emailSubject}
+            body={dashboard.emailBody}
+          />
+        </div>
+      </details>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((item) => {
           const Icon = item.icon;
