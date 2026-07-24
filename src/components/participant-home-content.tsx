@@ -75,6 +75,7 @@ export function ParticipantHomeContent() {
     ? Math.max(0, submissionDeadlineTime - now)
     : 0;
   const submissionClosed = hasValidSubmissionDeadline && submissionRemainingMs === 0;
+  const gameEnded = hasStarted && submissionClosed;
   const eventClues = session.event.clues ?? [];
 
   return (
@@ -91,7 +92,9 @@ export function ParticipantHomeContent() {
               <p className="text-xs font-semibold text-red-50 sm:text-sm">
                 {!hasValidStartTime
                   ? "Start time not set"
-                  : hasStarted
+                  : gameEnded
+                    ? "Game status"
+                    : hasStarted
                     ? "Game status"
                     : "Until game starts"}
               </p>
@@ -99,8 +102,10 @@ export function ParticipantHomeContent() {
             <p className="mt-3 text-2xl font-black tabular-nums tracking-normal sm:text-3xl">
               {!hasValidStartTime
                 ? "--:--:--"
-                : hasStarted
-                  ? "Game started"
+                : gameEnded
+                  ? "Game ended"
+                  : hasStarted
+                    ? "Game started"
                   : formatCountdown(remainingMs)}
             </p>
             {hasValidStartTime ? (
@@ -153,7 +158,11 @@ export function ParticipantHomeContent() {
             <h2 className="text-lg font-black text-gray-950">Destination Clues</h2>
           </div>
           <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1">
-            {!hasStarted ? (
+            {gameEnded ? (
+              <p className="rounded-lg bg-white p-4 text-sm font-semibold leading-6 text-gray-600">
+                Time is up and the game has ended. Thank you for participating!
+              </p>
+            ) : !hasStarted ? (
               <p className="rounded-lg bg-white p-4 text-sm font-semibold text-gray-600">
                 Destination clues will become visible once the game starts.
               </p>
