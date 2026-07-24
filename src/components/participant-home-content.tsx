@@ -6,8 +6,10 @@ import { Flag, Timer } from "lucide-react";
 import { ParticipantShell } from "@/components/participant-shell";
 import {
   readParticipantSession,
+  saveParticipantSession,
   type ParticipantSession,
 } from "@/lib/participant-session";
+import type { ParticipantJoinResponse } from "@/lib/participant-join/types";
 import { clues } from "@/lib/mock-data";
 
 const second = 1000;
@@ -26,6 +28,33 @@ export function ParticipantHomeContent() {
     }
 
     setSession(storedSession);
+    void refreshEventDetails(storedSession);
+
+    async function refreshEventDetails(currentSession: ParticipantSession) {
+      try {
+        const response = await fetch("/api/participant/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({
+            firstName: currentSession.participant.firstName,
+            lastName: currentSession.participant.lastName,
+            email: currentSession.participant.email,
+            gameCode: currentSession.event.gameCode,
+          }),
+        });
+        const result = (await response.json()) as ParticipantJoinResponse;
+
+        if (!result.ok) {
+          return;
+        }
+
+        saveParticipantSession(result);
+        setSession(readParticipantSession());
+      } catch {
+        // Keep the last known session available if a refresh temporarily fails.
+      }
+    }
   }, [router]);
 
   useEffect(() => {
@@ -45,6 +74,10 @@ export function ParticipantHomeContent() {
   return (
     <ParticipantShell title="Game Home">
       <div className="space-y-6">
+        <section className="card p-5">
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Current Game</p>
+          <h2 className="mt-1 text-xl font-black text-gray-950">{session.event.name}</h2>
+        </section>
         <section className="rounded-lg bg-bu-red p-5 text-white shadow-soft">
           <div className="flex items-center gap-3">
             <Timer className="h-6 w-6" />
