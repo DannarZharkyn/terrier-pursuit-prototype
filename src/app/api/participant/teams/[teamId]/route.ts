@@ -21,6 +21,8 @@ type TeamRow = {
 type ParticipantRow = {
   id: string;
   event_id: string;
+  first_name: string;
+  last_name: string;
 };
 
 export async function PATCH(
@@ -55,26 +57,105 @@ export async function PATCH(
   }
 
   const supabase = createSupabaseAdminClient();
-  const { data: eventId, error } = await supabase.rpc(
-    "remove_team_member_with_audit",
-    {
-      p_team_id: teamId,
-      p_remover_participant_id: validation.data.removerParticipantId,
-      p_removed_participant_id: validation.data.removedParticipantId,
-      p_reason: validation.data.reason,
-      p_explanation: validation.data.explanation,
-      p_attested: validation.data.attested,
-    },
+  const [teamResult, participantsResult, membershipsResult] = await Promise.all([
+    supabase.from("teams").select("id, event_id").eq("id", teamId),
+    supabase
+      .from("participants")
+      .select("id, event_id, first_name, last_name")
+      .in("id", [
+        validation.data.removerParticipantId,
+        validation.data.removedParticipantId,
+      ]),
+    supabase
+      .from("team_memberships")
+      .select("participant_id")
+      .eq("team_id", teamId)
+      .in("participant_id", [
+        validation.data.removerParticipantId,
+        validation.data.removedParticipantId,
+      ]),
+  ]);
+
+  if (teamResult.error || participantsResult.error || membershipsResult.error) {
+    return jsonRemove({
+      ok: false,
+      error: teamResult.error?.message
+        || participantsResult.error?.message
+        || membershipsResult.error?.message
+        || "Could not verify the team members.",
+    }, 500);
+  }
+
+  const team = ((teamResult.data ?? []) as unknown as TeamRow[])[0];
+  const participants = (participantsResult.data ?? []) as unknown as ParticipantRow[];
+  const membershipIds = new Set(
+    (membershipsResult.data ?? []).map((membership) => membership.participant_id as string),
+  );
+  const remover = participants.find(
+    (participant) => participant.id === validation.data?.removerParticipantId,
+  );
+  const removed = participants.find(
+    (participant) => participant.id === validation.data?.removedParticipantId,
   );
 
-  if (error) {
-    return jsonRemove({ ok: false, error: error.message }, 400);
+  if (!team) {
+    return jsonRemove({ ok: false, error: "Team was not found." }, 404);
+  }
+
+  if (
+    !remover
+    || !removed
+    || remover.event_id !== team.event_id
+    || removed.event_id !== team.event_id
+    || !membershipIds.has(remover.id)
+    || !membershipIds.has(removed.id)
+  ) {
+    return jsonRemove({
+      ok: false,
+      error: "Both participants must be current members of this team.",
+    }, 400);
+  }
+
+  const membershipDelete = await supabase
+    .from("team_memberships")
+    .delete()
+    .eq("team_id", teamId)
+    .eq("participant_id", removed.id);
+
+  if (membershipDelete.error) {
+    return jsonRemove({ ok: false, error: membershipDelete.error.message }, 500);
+  }
+
+  const auditInsert = await supabase
+    .from("participant_team_removal_audits")
+    .insert({
+      event_id: team.event_id,
+      team_id: teamId,
+      remover_participant_id: remover.id,
+      removed_participant_id: removed.id,
+      remover_name: `${remover.first_name} ${remover.last_name}`.trim(),
+      removed_name: `${removed.first_name} ${removed.last_name}`.trim(),
+      reason: validation.data.reason,
+      explanation: validation.data.explanation,
+      attested: validation.data.attested,
+      attested_at: new Date().toISOString(),
+    });
+
+  if (auditInsert.error) {
+    await supabase.from("team_memberships").insert({
+      team_id: teamId,
+      participant_id: removed.id,
+    });
+    return jsonRemove({
+      ok: false,
+      error: `Could not save the removal record: ${auditInsert.error.message}`,
+    }, 500);
   }
 
   revalidatePath("/participant/team-options");
   revalidatePath("/participant/team");
-  revalidatePath(`/organizer/event/${eventId}`);
-  revalidatePath(`/organizer/event/${eventId}/unassigned`);
+  revalidatePath(`/organizer/event/${team.event_id}`);
+  revalidatePath(`/organizer/event/${team.event_id}/unassigned`);
 
   return jsonRemove({
     ok: true,
