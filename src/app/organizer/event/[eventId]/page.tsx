@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
-import { ArrowRight, Clock, ClipboardCheck, UserMinus, Users } from "lucide-react";
+import { ArrowRight, CalendarClock, Clock, ClipboardCheck, MapPinned, ScrollText, UserMinus, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -27,6 +27,12 @@ type ParticipantRow = {
   id: string;
   first_name: string;
   last_name: string;
+};
+
+type EventLocationRow = {
+  id: string;
+  landmark: string;
+  campus_population: string;
 };
 
 export default async function EventDashboardPage({
@@ -62,6 +68,22 @@ export default async function EventDashboardPage({
           <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em] sm:text-4xl">{dashboard.gameCode}</p>
         </div>
         <p className="mt-3 max-w-sm text-sm leading-6 text-red-50 sm:mt-0 sm:text-right">Share this code with participants listed in this event&apos;s uploaded roster.</p>
+      </section>
+      <section className="mb-6 grid gap-4 lg:grid-cols-[minmax(240px,0.7fr)_minmax(0,1.3fr)]">
+        <div className="card p-5">
+          <div className="flex items-center gap-2 text-bu-red">
+            <CalendarClock className="h-5 w-5" />
+            <h2 className="font-black text-gray-950">Game Start Time</h2>
+          </div>
+          <p className="mt-4 text-lg font-bold text-gray-800">{dashboard.startTime}</p>
+        </div>
+        <div className="card p-5">
+          <div className="flex items-center gap-2 text-bu-red">
+            <ScrollText className="h-5 w-5" />
+            <h2 className="font-black text-gray-950">Game Rules</h2>
+          </div>
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-700">{dashboard.rules}</p>
+        </div>
       </section>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((item) => {
@@ -102,6 +124,34 @@ export default async function EventDashboardPage({
           );
         })}
       </div>
+      <section className="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
+        <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-5 py-4">
+          <MapPinned className="h-5 w-5 text-bu-red" />
+          <h2 className="text-lg font-black text-gray-950">Landmarks Used</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-left text-sm">
+            <thead className="bg-white text-xs uppercase text-gray-500">
+              <tr>
+                <th className="px-5 py-3">Landmark</th>
+                <th className="px-5 py-3">Campus Population</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {dashboard.locations.length ? dashboard.locations.map((location) => (
+                <tr key={location.id}>
+                  <td className="px-5 py-4 font-bold text-gray-950">{location.landmark}</td>
+                  <td className="px-5 py-4 text-gray-600">{location.campusPopulation}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td className="px-5 py-4 text-gray-600" colSpan={2}>No landmarks were uploaded for this event.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
       <section className="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
         <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
           <h2 className="text-lg font-black text-gray-950">Teams</h2>
@@ -184,7 +234,7 @@ async function getEventDashboard(eventId: string) {
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, name, game_code")
+    .select("id, name, game_code, starts_at, rules")
     .eq("id", eventId)
     .single();
 
@@ -199,6 +249,16 @@ async function getEventDashboard(eventId: string) {
 
   if (participantError) {
     throw new Error(`Could not load participants: ${participantError.message}`);
+  }
+
+  const { data: locations, error: locationsError } = await supabase
+    .from("event_locations")
+    .select("id, landmark, campus_population")
+    .eq("event_id", eventId)
+    .order("position", { ascending: true });
+
+  if (locationsError) {
+    throw new Error(`Could not load event locations: ${locationsError.message}`);
   }
 
   const { data: teams, error: teamError } = await supabase
@@ -293,12 +353,29 @@ async function getEventDashboard(eventId: string) {
   return {
     name: event.name as string,
     gameCode: (event.game_code as string | null) ?? "Not published",
+    startTime: event.starts_at
+      ? formatEventDateTime(event.starts_at as string)
+      : "Not scheduled",
+    rules: (event.rules as string | null) ?? "No rules were provided.",
+    locations: ((locations ?? []) as unknown as EventLocationRow[]).map((location) => ({
+      id: location.id,
+      landmark: location.landmark,
+      campusPopulation: location.campus_population,
+    })),
     participantCount: String(participants?.length ?? 0),
     teamCount: String(teamRows.length),
     unassignedCount: String(unassignedParticipantCount),
     submittedTeamCount: String(submissionByTeam.size),
     teams: teamRows,
   };
+}
+
+function formatEventDateTime(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "America/New_York",
+  }).format(new Date(value));
 }
 
 function formatStatus(status: string) {
