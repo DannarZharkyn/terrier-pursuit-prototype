@@ -12,6 +12,8 @@ type EditableEvent = {
   startsAt: string;
   submissionDeadline: string;
   rules: string;
+  emailSubject: string;
+  emailBody: string;
 };
 
 export function EditEventForm({ event }: { event: EditableEvent }) {
@@ -24,11 +26,20 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
   const [submissionDate, setSubmissionDate] = useState(toDateInputValue(initialSubmissionDeadline));
   const [submissionTime, setSubmissionTime] = useState(toTimeInputValue(initialSubmissionDeadline));
   const [rules, setRules] = useState(event.rules);
+  const [emailSubject, setEmailSubject] = useState(event.emailSubject);
+  const [emailBody, setEmailBody] = useState(event.emailBody);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
   const startsAt = toLocalIsoDateTime(startDate, startTime);
   const submissionDeadline = toLocalIsoDateTime(submissionDate, submissionTime);
-  const canSave = Boolean(name.trim() && startsAt && submissionDeadline && rules.trim());
+  const canSave = Boolean(
+    name.trim()
+    && startsAt
+    && submissionDeadline
+    && rules.trim()
+    && emailSubject.trim()
+    && emailBody.trim(),
+  );
 
   async function handleSubmit(submitEvent: FormEvent<HTMLFormElement>) {
     submitEvent.preventDefault();
@@ -48,7 +59,14 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
       const response = await fetch(`/api/organizer/events/${event.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, startsAt, submissionDeadline, rules }),
+        body: JSON.stringify({
+          name,
+          startsAt,
+          submissionDeadline,
+          rules,
+          emailSubject,
+          emailBody,
+        }),
       });
       const result = (await response.json()) as { ok: boolean; error?: string };
 
@@ -127,10 +145,36 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
         />
       </label>
 
+      <div className="border-t border-gray-200 pt-6">
+        <h2 className="text-lg font-black text-gray-950">Participant Invitation Email</h2>
+        <p className="mt-1 text-sm leading-6 text-gray-600">
+          These saved fields appear on the View Event page for copying into Gmail.
+        </p>
+        <label className="mt-4 block">
+          <span className="label">Email Subject</span>
+          <input
+            className="field mt-2"
+            value={emailSubject}
+            onChange={(inputEvent) => setEmailSubject(inputEvent.target.value)}
+            maxLength={200}
+            required
+          />
+        </label>
+        <label className="mt-4 block">
+          <span className="label">Email Message</span>
+          <textarea
+            className="field mt-2 min-h-72 resize-y"
+            value={emailBody}
+            onChange={(inputEvent) => setEmailBody(inputEvent.target.value)}
+            required
+          />
+        </label>
+      </div>
+
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>You are about to change an existing game. Confirm that the new name, start time, submission deadline, and rules are correct before saving.</p>
+          <p>You are about to change an existing game and its saved invitation email. Confirm that all details are correct before saving.</p>
         </div>
       </div>
 

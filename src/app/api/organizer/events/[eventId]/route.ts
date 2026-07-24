@@ -81,6 +81,8 @@ export async function PATCH(
   const startsAt = stringValue(body.startsAt).trim();
   const submissionDeadline = stringValue(body.submissionDeadline).trim();
   const rules = stringValue(body.rules).trim();
+  const emailSubject = stringValue(body.emailSubject).trim();
+  const emailBody = stringValue(body.emailBody).trim();
   const parsedStartsAt = new Date(startsAt);
   const parsedSubmissionDeadline = new Date(submissionDeadline);
 
@@ -104,6 +106,14 @@ export async function PATCH(
     return jsonUpdate({ ok: false, error: "Game rules are required." }, 400);
   }
 
+  if (!emailSubject || emailSubject.length > 200) {
+    return jsonUpdate({ ok: false, error: "Email subject must be between 1 and 200 characters." }, 400);
+  }
+
+  if (!emailBody) {
+    return jsonUpdate({ ok: false, error: "Email message is required." }, 400);
+  }
+
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("events")
@@ -112,6 +122,8 @@ export async function PATCH(
       starts_at: parsedStartsAt.toISOString(),
       submission_deadline: parsedSubmissionDeadline.toISOString(),
       rules,
+      email_subject: emailSubject,
+      email_body: emailBody,
     })
     .eq("id", eventId)
     .select("id")

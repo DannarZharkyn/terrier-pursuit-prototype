@@ -1,44 +1,42 @@
 type EventInvitation = {
-  firstName: string;
   eventName: string;
   gameCode: string;
   startsAt: string;
+  submissionDeadline: string;
+  rules: string;
   participantUrl: string;
 };
 
 export function createEventInvitationEmail(invitation: EventInvitation) {
   const startsAt = formatUsDateTime(invitation.startsAt);
-  const subject = `You're invited to ${invitation.eventName}`;
-  const text = [
-    `Hi ${invitation.firstName},`,
+  const submissionDeadline = formatUsDateTime(invitation.submissionDeadline);
+  const subject = `You're invited to play ${invitation.eventName}`;
+  const body = [
+    "Dear Participant,",
     "",
-    `You have been invited to join ${invitation.eventName}.`,
+    "Welcome to the Terrier Pursuit game!",
+    "",
+    `Game: ${invitation.eventName}`,
+    `Game starts: ${startsAt}`,
+    `Submission deadline: ${submissionDeadline}`,
     `Game code: ${invitation.gameCode}`,
-    `Starts: ${startsAt}`,
     "",
-    `Open Terrier Pursuit: ${invitation.participantUrl}`,
+    `Sign in here: ${invitation.participantUrl}`,
     "",
-    "Enter your name, email address, and game code to join.",
+    "Instructions:",
+    "1. Open the sign-in link.",
+    "2. Enter your first name, last name, email address, and the game code above.",
+    "3. Create a team, join an existing team, or wait for the organizer to assign you.",
+    "4. Destination clues will become visible when the game starts.",
+    "",
+    "Game rules:",
+    invitation.rules,
+    "",
+    "Good luck and have fun!",
+    "Terrier Pursuit",
   ].join("\n");
-  const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:auto">
-      <h1 style="color:#cc0000">Terrier Pursuit</h1>
-      <p>Hi ${escapeHtml(invitation.firstName)},</p>
-      <p>You have been invited to join <strong>${escapeHtml(invitation.eventName)}</strong>.</p>
-      <div style="background:#f3f4f6;border-radius:8px;padding:16px;margin:20px 0">
-        <p style="margin:0 0 8px"><strong>Game code:</strong> ${escapeHtml(invitation.gameCode)}</p>
-        <p style="margin:0"><strong>Starts:</strong> ${escapeHtml(startsAt)}</p>
-      </div>
-      <a href="${escapeHtml(invitation.participantUrl)}" style="display:inline-block;background:#cc0000;color:white;text-decoration:none;font-weight:bold;border-radius:8px;padding:12px 18px">
-        Join the game
-      </a>
-      <p style="font-size:13px;color:#6b7280;margin-top:20px">
-        Enter your name, email address, and game code on the participant sign-in page.
-      </p>
-    </div>
-  `.trim();
 
-  return { subject, text, html };
+  return { subject, body };
 }
 
 function formatUsDateTime(value: string) {
@@ -52,17 +50,4 @@ function formatUsDateTime(value: string) {
     timeZone: "America/New_York",
     timeZoneName: "short",
   }).format(new Date(value));
-}
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, (character) => {
-    const entities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    };
-    return entities[character];
-  });
 }

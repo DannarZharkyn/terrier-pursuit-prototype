@@ -2,18 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createEventInvitationEmail } from "./event-invitation";
 
-test("createEventInvitationEmail includes event details and escapes HTML", () => {
+test("createEventInvitationEmail includes all participant instructions", () => {
   const email = createEventInvitationEmail({
-    firstName: "<Dannar>",
     eventName: "Test & Play",
     gameCode: "ABC234",
     startsAt: "2026-07-30T14:00:00.000Z",
+    submissionDeadline: "2026-07-30T18:00:00.000Z",
+    rules: "Stay together.",
     participantUrl: "https://example.com/participant/welcome",
   });
 
   assert.match(email.subject, /Test & Play/);
-  assert.match(email.text, /ABC234/);
-  assert.match(email.html, /&lt;Dannar&gt;/);
-  assert.match(email.html, /Test &amp; Play/);
-  assert.doesNotMatch(email.html, /<Dannar>/);
+  assert.match(email.body, /Dear Participant/);
+  assert.match(email.body, /ABC234/);
+  assert.match(email.body, /Stay together/);
+  assert.match(email.body, /https:\/\/example.com\/participant\/welcome/);
 });

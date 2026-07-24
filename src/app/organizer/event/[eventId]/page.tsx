@@ -4,7 +4,9 @@ import { unstable_noStore as noStore } from "next/cache";
 import { ArrowRight, CalendarCheck, CalendarClock, Clock, ClipboardCheck, MapPinned, Pencil, ScrollText, UserMinus, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
+import { EventEmailTemplate } from "@/components/event-email-template";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createEventInvitationEmail } from "@/lib/email/event-invitation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -28,6 +30,7 @@ type ParticipantRow = {
   id: string;
   first_name: string;
   last_name: string;
+  email: string;
 };
 
 type EventLocationRow = {
@@ -105,6 +108,13 @@ export default async function EventDashboardPage({
           <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-700">{dashboard.rules}</p>
         </div>
       </section>
+      <div className="mb-8">
+        <EventEmailTemplate
+          recipients={dashboard.emailRecipients}
+          subject={dashboard.emailSubject}
+          body={dashboard.emailBody}
+        />
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((item) => {
           const Icon = item.icon;
@@ -254,7 +264,7 @@ async function getEventDashboard(eventId: string) {
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, name, game_code, starts_at, submission_deadline, rules")
+    .select("id, name, game_code, starts_at, submission_deadline, rules, email_subject, email_body")
     .eq("id", eventId)
     .single();
 
@@ -264,7 +274,7 @@ async function getEventDashboard(eventId: string) {
 
   const { data: participants, error: participantError } = await supabase
     .from("participants")
-    .select("id, first_name, last_name")
+    .select("id, first_name, last_name, email")
     .eq("event_id", eventId);
 
   if (participantError) {
@@ -315,6 +325,17 @@ async function getEventDashboard(eventId: string) {
   }
 
   const participantRows = (participants ?? []) as unknown as ParticipantRow[];
+  const generatedEmail = createEventInvitationEmail({
+    eventName: event.name as string,
+    gameCode: (event.game_code as string | null) ?? "",
+    startsAt: event.starts_at as string,
+    submissionDeadline: event.submission_deadline as string,
+    rules: (event.rules as string | null) ?? "",
+    participantUrl: new URL(
+      "/participant/welcome",
+      process.env.NEXT_PUBLIC_APP_URL || "https://terrier-pursuit-prototype.vercel.app",
+    ).toString(),
+  });
   const participantIds = new Set(
     participantRows.map((participant) => participant.id),
   );
@@ -380,6 +401,9 @@ async function getEventDashboard(eventId: string) {
       ? formatEventDateTime(event.submission_deadline as string)
       : "Not scheduled",
     rules: (event.rules as string | null) ?? "No rules were provided.",
+    emailRecipients: participantRows.map((participant) => participant.email).join(", "),
+    emailSubject: (event.email_subject as string | null) ?? generatedEmail.subject,
+    emailBody: (event.email_body as string | null) ?? generatedEmail.body,
     locations: ((locations ?? []) as unknown as EventLocationRow[]).map((location) => ({
       id: location.id,
       landmark: location.landmark,
