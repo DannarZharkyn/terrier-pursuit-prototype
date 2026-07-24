@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { validateParticipantJoinRequest } from "@/lib/participant-join/validation";
 import type { ParticipantJoinResponse } from "@/lib/participant-join/types";
+import { normalizeLegacyPunctuation } from "@/lib/text/normalize-legacy-punctuation";
 
 type EventRow = {
   id: string;
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
       submissionDeadline: event.submission_deadline ?? "",
       rules: event.rules ?? "",
       clues: ((locationData ?? []) as unknown as EventLocationRow[])
-        .map((location) => location.clue.trim())
+        .map((location) => normalizeLegacyPunctuation(location.clue).trim())
         .filter(Boolean),
     },
   });

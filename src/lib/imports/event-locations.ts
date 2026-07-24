@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { normalizeLegacyPunctuation } from "@/lib/text/normalize-legacy-punctuation";
 
 export type EventLocationImportField =
   | "Landmark"
@@ -280,7 +281,7 @@ function isBlankLocationRow(row: unknown[], indexes: HeaderIndexes) {
 }
 
 function normalizeDisplayValue(value: unknown) {
-  return String(value ?? "")
+  return normalizeLegacyPunctuation(String(value ?? ""))
     .trim()
     .replace(/\s+/g, " ");
 }

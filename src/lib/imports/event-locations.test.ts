@@ -214,6 +214,31 @@ describe("parseEventLocationImportFile", () => {
 
     assert.equal(result.locations[0].landmark, "BU Bridge");
   });
+
+  it("normalizes legacy Windows punctuation in clues", () => {
+    const result = parseEventLocationImportFile(
+      makeWorkbookBuffer([
+        ["Landmark", "Location", "Clue", "Campus Population"],
+        [
+          "Statue",
+          "https://example.com/statue",
+          "Find the \u0093Founding Father\u0094. He\u0092s nearby\u0097look carefully.",
+          "Students",
+        ],
+      ]),
+    );
+
+    assert.equal(result.ok, true);
+
+    if (!result.ok) {
+      return;
+    }
+
+    assert.equal(
+      result.locations[0].clue,
+      "Find the “Founding Father”. He’s nearby—look carefully.",
+    );
+  });
 });
 
 function makeWorkbookBuffer(rows: unknown[][]) {
