@@ -19,6 +19,14 @@ export type DeleteTeamRequest = {
   participantId: string;
 };
 
+export type RemoveTeamMemberRequest = {
+  removerParticipantId: string;
+  removedParticipantId: string;
+  reason: "did_not_show_up" | "other";
+  explanation: string;
+  attested: boolean;
+};
+
 export type TeamMember = {
   id: string;
   firstName: string;
@@ -54,6 +62,11 @@ export type DeleteTeamSuccess = {
   teamDeleted: boolean;
 };
 
+export type RemoveTeamMemberSuccess = {
+  ok: true;
+  removedParticipantId: string;
+};
+
 export type TeamApiFailure = {
   ok: false;
   error: string;
@@ -67,3 +80,5 @@ export type CurrentTeamResponse = CurrentTeamSuccess | TeamApiFailure;
 export type JoinTeamResponse = JoinTeamSuccess | TeamApiFailure;
 
 export type DeleteTeamResponse = DeleteTeamSuccess | TeamApiFailure;
+
+export type RemoveTeamMemberResponse = RemoveTeamMemberSuccess | TeamApiFailure;

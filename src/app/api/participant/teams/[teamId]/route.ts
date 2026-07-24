@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { validateDeleteTeamRequest } from "@/lib/participant-teams/validation";
-import type { DeleteTeamResponse } from "@/lib/participant-teams/types";
+import {
+  validateDeleteTeamRequest,
+  validateRemoveTeamMemberRequest,
+} from "@/lib/participant-teams/validation";
+import type {
+  DeleteTeamResponse,
+  RemoveTeamMemberResponse,
+} from "@/lib/participant-teams/types";
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -16,6 +22,65 @@ type ParticipantRow = {
   id: string;
   event_id: string;
 };
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: { teamId: string } },
+) {
+  const teamId = params.teamId;
+
+  if (!uuidPattern.test(teamId)) {
+    return jsonRemove({ ok: false, error: "Team ID is invalid." }, 400);
+  }
+
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return jsonRemove({ ok: false, error: "Request body must be valid JSON." }, 400);
+  }
+
+  const validation = validateRemoveTeamMemberRequest(body);
+
+  if (!validation.data) {
+    return jsonRemove(
+      {
+        ok: false,
+        error: "Please check the member removal form.",
+        details: validation.errors,
+      },
+      400,
+    );
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: eventId, error } = await supabase.rpc(
+    "remove_team_member_with_audit",
+    {
+      p_team_id: teamId,
+      p_remover_participant_id: validation.data.removerParticipantId,
+      p_removed_participant_id: validation.data.removedParticipantId,
+      p_reason: validation.data.reason,
+      p_explanation: validation.data.explanation,
+      p_attested: validation.data.attested,
+    },
+  );
+
+  if (error) {
+    return jsonRemove({ ok: false, error: error.message }, 400);
+  }
+
+  revalidatePath("/participant/team-options");
+  revalidatePath("/participant/team");
+  revalidatePath(`/organizer/event/${eventId}`);
+  revalidatePath(`/organizer/event/${eventId}/unassigned`);
+
+  return jsonRemove({
+    ok: true,
+    removedParticipantId: validation.data.removedParticipantId,
+  });
+}
 
 export async function DELETE(
   request: Request,
@@ -149,5 +214,9 @@ export async function DELETE(
 }
 
 function json(response: DeleteTeamResponse, status = 200) {
+  return NextResponse.json(response, { status });
+}
+
+function jsonRemove(response: RemoveTeamMemberResponse, status = 200) {
   return NextResponse.json(response, { status });
 }

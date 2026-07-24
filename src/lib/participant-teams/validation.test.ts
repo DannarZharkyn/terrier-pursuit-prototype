@@ -7,6 +7,7 @@ import {
   validateCurrentTeamRequest,
   validateDeleteTeamRequest,
   validateJoinTeamRequest,
+  validateRemoveTeamMemberRequest,
 } from "./validation";
 
 const eventId = "11111111-1111-4111-8111-111111111111";
@@ -120,6 +121,33 @@ test("validateDeleteTeamRequest accepts a valid participant ID", () => {
 
   assert.deepEqual(result.errors, []);
   assert.equal(result.data?.participantId, participantId);
+});
+
+test("validateRemoveTeamMemberRequest requires an audited removal form", () => {
+  const result = validateRemoveTeamMemberRequest({
+    removerParticipantId: participantId,
+    removedParticipantId: "33333333-3333-4333-8333-333333333333",
+    reason: "did_not_show_up",
+    explanation: "The participant did not attend the game.",
+    attested: true,
+  });
+
+  assert.equal(result.errors.length, 0);
+  assert.equal(result.data?.reason, "did_not_show_up");
+  assert.equal(result.data?.attested, true);
+});
+
+test("validateRemoveTeamMemberRequest rejects self-removal and missing confirmation", () => {
+  const result = validateRemoveTeamMemberRequest({
+    removerParticipantId: participantId,
+    removedParticipantId: participantId,
+    reason: "other",
+    explanation: "",
+    attested: false,
+  });
+
+  assert.ok(result.errors.includes("Use Leave This Team to remove yourself."));
+  assert.ok(result.errors.includes("You must confirm that the information is true."));
 });
 
 test("team code contract uses six friendly uppercase characters", () => {

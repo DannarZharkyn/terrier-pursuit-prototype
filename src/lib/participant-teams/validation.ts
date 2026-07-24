@@ -3,6 +3,7 @@ import type {
   CurrentTeamRequest,
   DeleteTeamRequest,
   JoinTeamRequest,
+  RemoveTeamMemberRequest,
 } from "./types";
 
 export const teamCodeCharacters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -53,6 +54,62 @@ export function validateCreateTeamRequest(body: unknown): {
       participantId,
       teamName,
       normalizedTeamName,
+    },
+    errors: [],
+  };
+}
+
+export function validateRemoveTeamMemberRequest(body: unknown): {
+  data?: RemoveTeamMemberRequest;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  if (!isRecord(body)) {
+    return { errors: ["Request body must be an object."] };
+  }
+
+  const removerParticipantId = stringValue(body.removerParticipantId).trim();
+  const removedParticipantId = stringValue(body.removedParticipantId).trim();
+  const reason = stringValue(body.reason).trim();
+  const explanation = collapseWhitespace(stringValue(body.explanation));
+  const attested = body.attested === true;
+
+  if (!isUuid(removerParticipantId)) {
+    errors.push("Current participant ID must be a valid UUID.");
+  }
+
+  if (!isUuid(removedParticipantId)) {
+    errors.push("Removed participant ID must be a valid UUID.");
+  }
+
+  if (removerParticipantId === removedParticipantId) {
+    errors.push("Use Leave This Team to remove yourself.");
+  }
+
+  if (reason !== "did_not_show_up" && reason !== "other") {
+    errors.push("Please select a removal reason.");
+  }
+
+  if (explanation.length < 3 || explanation.length > 1000) {
+    errors.push("Explanation must be between 3 and 1000 characters.");
+  }
+
+  if (!attested) {
+    errors.push("You must confirm that the information is true.");
+  }
+
+  if (errors.length > 0) {
+    return { errors };
+  }
+
+  return {
+    data: {
+      removerParticipantId,
+      removedParticipantId,
+      reason: reason as RemoveTeamMemberRequest["reason"],
+      explanation,
+      attested,
     },
     errors: [],
   };
