@@ -100,13 +100,18 @@ export default async function EventDashboardPage({
           </div>
           <p className="mt-4 text-lg font-bold text-gray-800">{dashboard.submissionDeadline}</p>
         </div>
-        <div className="card p-5 sm:col-span-2">
-          <div className="flex items-center gap-2 text-bu-red">
-            <ScrollText className="h-5 w-5" />
-            <h2 className="font-black text-gray-950">Game Rules</h2>
+        <details className="group card overflow-hidden sm:col-span-2">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 text-bu-red">
+              <ScrollText className="h-5 w-5" />
+              <span className="font-black text-gray-950">Game Rules</span>
+            </span>
+            <ChevronDown className="h-5 w-5 shrink-0 text-gray-500 transition group-open:rotate-180" />
+          </summary>
+          <div className="border-t border-gray-200 bg-white px-5 py-4">
+            <p className="whitespace-pre-wrap text-sm leading-6 text-gray-700">{dashboard.rules}</p>
           </div>
-          <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-700">{dashboard.rules}</p>
-        </div>
+        </details>
       </section>
       <details className="group mb-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
