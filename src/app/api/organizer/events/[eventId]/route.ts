@@ -79,8 +79,10 @@ export async function PATCH(
 
   const name = stringValue(body.name).trim();
   const startsAt = stringValue(body.startsAt).trim();
+  const submissionDeadline = stringValue(body.submissionDeadline).trim();
   const rules = stringValue(body.rules).trim();
   const parsedStartsAt = new Date(startsAt);
+  const parsedSubmissionDeadline = new Date(submissionDeadline);
 
   if (!name || name.length > 120) {
     return jsonUpdate({ ok: false, error: "Game name must be between 1 and 120 characters." }, 400);
@@ -88,6 +90,14 @@ export async function PATCH(
 
   if (!startsAt || Number.isNaN(parsedStartsAt.getTime())) {
     return jsonUpdate({ ok: false, error: "Please choose a valid game start date and time." }, 400);
+  }
+
+  if (!submissionDeadline || Number.isNaN(parsedSubmissionDeadline.getTime())) {
+    return jsonUpdate({ ok: false, error: "Please choose a valid submission deadline." }, 400);
+  }
+
+  if (parsedSubmissionDeadline <= parsedStartsAt) {
+    return jsonUpdate({ ok: false, error: "Submission deadline must be after the game start time." }, 400);
   }
 
   if (!rules) {
@@ -100,6 +110,7 @@ export async function PATCH(
     .update({
       name,
       starts_at: parsedStartsAt.toISOString(),
+      submission_deadline: parsedSubmissionDeadline.toISOString(),
       rules,
     })
     .eq("id", eventId)

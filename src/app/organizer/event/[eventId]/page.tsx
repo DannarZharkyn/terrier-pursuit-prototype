@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
-import { ArrowRight, CalendarClock, Clock, ClipboardCheck, MapPinned, Pencil, ScrollText, UserMinus, Users } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarClock, Clock, ClipboardCheck, MapPinned, Pencil, ScrollText, UserMinus, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -78,7 +78,7 @@ export default async function EventDashboardPage({
           </Link>
         </div>
       </section>
-      <section className="mb-6 grid gap-4 lg:grid-cols-[minmax(240px,0.7fr)_minmax(0,1.3fr)]">
+      <section className="mb-6 grid gap-4 sm:grid-cols-2">
         <div className="card p-5">
           <div className="flex items-center gap-2 text-bu-red">
             <CalendarClock className="h-5 w-5" />
@@ -87,6 +87,13 @@ export default async function EventDashboardPage({
           <p className="mt-4 text-lg font-bold text-gray-800">{dashboard.startTime}</p>
         </div>
         <div className="card p-5">
+          <div className="flex items-center gap-2 text-bu-red">
+            <CalendarCheck className="h-5 w-5" />
+            <h2 className="font-black text-gray-950">Submission Deadline</h2>
+          </div>
+          <p className="mt-4 text-lg font-bold text-gray-800">{dashboard.submissionDeadline}</p>
+        </div>
+        <div className="card p-5 sm:col-span-2">
           <div className="flex items-center gap-2 text-bu-red">
             <ScrollText className="h-5 w-5" />
             <h2 className="font-black text-gray-950">Game Rules</h2>
@@ -243,7 +250,7 @@ async function getEventDashboard(eventId: string) {
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, name, game_code, starts_at, rules")
+    .select("id, name, game_code, starts_at, submission_deadline, rules")
     .eq("id", eventId)
     .single();
 
@@ -364,6 +371,9 @@ async function getEventDashboard(eventId: string) {
     gameCode: (event.game_code as string | null) ?? "Not published",
     startTime: event.starts_at
       ? formatEventDateTime(event.starts_at as string)
+      : "Not scheduled",
+    submissionDeadline: event.submission_deadline
+      ? formatEventDateTime(event.submission_deadline as string)
       : "Not scheduled",
     rules: (event.rules as string | null) ?? "No rules were provided.",
     locations: ((locations ?? []) as unknown as EventLocationRow[]).map((location) => ({

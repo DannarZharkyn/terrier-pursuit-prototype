@@ -16,7 +16,7 @@ export default async function EditEventPage({
   const supabase = createSupabaseAdminClient();
   const { data: event, error } = await supabase
     .from("events")
-    .select("id, name, starts_at, rules")
+    .select("id, name, starts_at, submission_deadline, rules")
     .eq("id", params.eventId)
     .maybeSingle();
 
@@ -34,6 +34,7 @@ export default async function EditEventPage({
           id: event.id as string,
           name: event.name as string,
           startsAt: (event.starts_at as string | null) ?? new Date().toISOString(),
+          submissionDeadline: (event.submission_deadline as string | null) ?? new Date().toISOString(),
           rules: (event.rules as string | null) ?? "",
         }}
       />

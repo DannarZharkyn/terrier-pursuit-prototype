@@ -9,20 +9,25 @@ type EditableEvent = {
   id: string;
   name: string;
   startsAt: string;
+  submissionDeadline: string;
   rules: string;
 };
 
 export function EditEventForm({ event }: { event: EditableEvent }) {
   const router = useRouter();
   const initialDate = new Date(event.startsAt);
+  const initialSubmissionDeadline = new Date(event.submissionDeadline);
   const [name, setName] = useState(event.name);
   const [startDate, setStartDate] = useState(toDateInputValue(initialDate));
   const [startTime, setStartTime] = useState(toTimeInputValue(initialDate));
+  const [submissionDate, setSubmissionDate] = useState(toDateInputValue(initialSubmissionDeadline));
+  const [submissionTime, setSubmissionTime] = useState(toTimeInputValue(initialSubmissionDeadline));
   const [rules, setRules] = useState(event.rules);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
   const startsAt = toLocalIsoDateTime(startDate, startTime);
-  const canSave = Boolean(name.trim() && startsAt && rules.trim());
+  const submissionDeadline = toLocalIsoDateTime(submissionDate, submissionTime);
+  const canSave = Boolean(name.trim() && startsAt && submissionDeadline && rules.trim());
 
   async function handleSubmit(submitEvent: FormEvent<HTMLFormElement>) {
     submitEvent.preventDefault();
@@ -31,7 +36,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
       return;
     }
 
-    if (!window.confirm("Confirm changes to this live game? Participants may see the updated name, start time, and rules.")) {
+    if (!window.confirm("Confirm changes to this live game? Participants may see the updated name, start time, submission deadline, and rules.")) {
       return;
     }
 
@@ -42,7 +47,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
       const response = await fetch(`/api/organizer/events/${event.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, startsAt, rules }),
+        body: JSON.stringify({ name, startsAt, submissionDeadline, rules }),
       });
       const result = (await response.json()) as { ok: boolean; error?: string };
 
@@ -96,6 +101,29 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
         </div>
       </fieldset>
 
+      <fieldset>
+        <legend className="label">Submission Deadline</legend>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <input
+            className="field"
+            type="date"
+            aria-label="Submission deadline date"
+            value={submissionDate}
+            onChange={(inputEvent) => setSubmissionDate(inputEvent.target.value)}
+            required
+          />
+          <input
+            className="field"
+            type="time"
+            step="300"
+            aria-label="Submission deadline time"
+            value={submissionTime}
+            onChange={(inputEvent) => setSubmissionTime(inputEvent.target.value)}
+            required
+          />
+        </div>
+      </fieldset>
+
       <label className="block">
         <span className="label">Game Rules</span>
         <textarea
@@ -109,7 +137,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>You are about to change an existing game. Confirm that the new name, start time, and rules are correct before saving.</p>
+          <p>You are about to change an existing game. Confirm that the new name, start time, submission deadline, and rules are correct before saving.</p>
         </div>
       </div>
 
