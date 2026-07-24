@@ -69,38 +69,41 @@ export default async function EventDashboardPage({
       <div className="mb-5">
         <PageBackLink href="/organizer/dashboard" label="Back to Dashboard" />
       </div>
-      <section className="mb-6 rounded-lg bg-bu-red p-5 text-white shadow-soft sm:flex sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-red-100">Participant game code</p>
-          <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em] sm:text-4xl">{dashboard.gameCode}</p>
-        </div>
-        <div className="mt-4 flex flex-col items-start gap-3 sm:mt-0 sm:items-end">
-          <p className="max-w-sm text-sm leading-6 text-red-50 sm:text-right">Share this code with participants listed in this event&apos;s uploaded roster.</p>
-          <Link
-            href={`/organizer/event/${params.eventId}/edit`}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-bu-red shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-200"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit Game
-          </Link>
+      <section className="relative mb-6 rounded-lg bg-bu-red p-4 text-white shadow-soft sm:p-5">
+        <Link
+          href={`/organizer/event/${params.eventId}/edit`}
+          className="absolute right-4 top-4 inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-bu-red shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-200"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Edit Game
+        </Link>
+        <div className="grid gap-4 pt-12 sm:grid-cols-3 sm:gap-5 sm:pr-28 sm:pt-0">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-red-100">
+              Participant game code
+            </p>
+            <p className="mt-1 font-mono text-2xl font-black tracking-[0.14em]">
+              {dashboard.gameCode}
+            </p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-red-100">
+              <CalendarClock className="h-3.5 w-3.5" />
+              Game starts
+            </p>
+            <p className="mt-1 text-sm font-bold leading-5">{dashboard.startTime}</p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-red-100">
+              <CalendarCheck className="h-3.5 w-3.5" />
+              Submission deadline
+            </p>
+            <p className="mt-1 text-sm font-bold leading-5">{dashboard.submissionDeadline}</p>
+          </div>
         </div>
       </section>
-      <section className="mb-6 grid gap-4 sm:grid-cols-2">
-        <div className="card p-5">
-          <div className="flex items-center gap-2 text-bu-red">
-            <CalendarClock className="h-5 w-5" />
-            <h2 className="font-black text-gray-950">Game Start Time</h2>
-          </div>
-          <p className="mt-4 text-lg font-bold text-gray-800">{dashboard.startTime}</p>
-        </div>
-        <div className="card p-5">
-          <div className="flex items-center gap-2 text-bu-red">
-            <CalendarCheck className="h-5 w-5" />
-            <h2 className="font-black text-gray-950">Submission Deadline</h2>
-          </div>
-          <p className="mt-4 text-lg font-bold text-gray-800">{dashboard.submissionDeadline}</p>
-        </div>
-        <details className="group card overflow-hidden sm:col-span-2">
+      <section className="mb-6">
+        <details className="group card overflow-hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
             <span className="flex items-center gap-2 text-bu-red">
               <ScrollText className="h-5 w-5" />
@@ -173,12 +176,15 @@ export default async function EventDashboardPage({
           );
         })}
       </div>
-      <section className="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
-        <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-5 py-4">
-          <MapPinned className="h-5 w-5 text-bu-red" />
-          <h2 className="text-lg font-black text-gray-950">Landmarks Used</h2>
-        </div>
-        <div className="overflow-x-auto">
+      <details className="group mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 bg-gray-50 px-5 py-4 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2">
+            <MapPinned className="h-5 w-5 text-bu-red" />
+            <span className="text-lg font-black text-gray-950">Landmarks Used</span>
+          </span>
+          <ChevronDown className="h-5 w-5 shrink-0 text-gray-500 transition group-open:rotate-180" />
+        </summary>
+        <div className="overflow-x-auto border-t border-gray-200">
           <table className="w-full min-w-[520px] text-left text-sm">
             <thead className="bg-white text-xs uppercase text-gray-500">
               <tr>
@@ -200,7 +206,7 @@ export default async function EventDashboardPage({
             </tbody>
           </table>
         </div>
-      </section>
+      </details>
       <section className="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
         <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
           <h2 className="text-lg font-black text-gray-950">Teams</h2>
