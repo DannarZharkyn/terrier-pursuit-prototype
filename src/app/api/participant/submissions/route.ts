@@ -17,6 +17,45 @@ type UploadedFile = UploadFile & {
   path: string;
 };
 
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const teamId = url.searchParams.get("teamId")?.trim() ?? "";
+  const participantId = url.searchParams.get("participantId")?.trim() ?? "";
+
+  if (!uuidPattern.test(teamId) || !uuidPattern.test(participantId)) {
+    return json({ ok: false, error: "Team or participant ID is invalid." }, 400);
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const context = await getSubmissionContext(supabase, teamId, participantId);
+
+  if (!context.ok) {
+    return json({ ok: false, error: context.error }, context.status);
+  }
+
+  const submission = await supabase
+    .from("team_hunt_submissions")
+    .select("id, submitted_at, team_submission_photos(count)")
+    .eq("team_id", teamId)
+    .maybeSingle();
+
+  if (submission.error) {
+    return json({ ok: false, error: submission.error.message }, 500);
+  }
+
+  const photoCounts = submission.data?.team_submission_photos as unknown as
+    | { count: number }[]
+    | undefined;
+
+  return json({
+    ok: true,
+    submitted: Boolean(submission.data),
+    submissionId: submission.data?.id,
+    submittedAt: submission.data?.submitted_at,
+    photoCount: photoCounts?.[0]?.count ?? 0,
+  });
+}
+
 export async function POST(request: Request) {
   let body: unknown;
 

@@ -12,6 +12,7 @@ export function ParticipantUploadsContent() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [team, setTeam] = useState<ParticipantTeam | null>();
+  const [submissionChecked, setSubmissionChecked] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>();
@@ -35,11 +36,47 @@ export function ParticipantUploadsContent() {
       .then((result) => {
         if (!result.ok) {
           setError(result.error);
+          setSubmissionChecked(true);
           return;
         }
         setTeam(result.team);
+
+        if (!result.team) {
+          setSubmissionChecked(true);
+          return;
+        }
+
+        const submissionParams = new URLSearchParams({
+          teamId: result.team.id,
+          participantId: session.participant.id,
+        });
+
+        return fetch(`/api/participant/submissions?${submissionParams.toString()}`, {
+          cache: "no-store",
+        })
+          .then(async (response) => (await response.json()) as {
+            ok: boolean;
+            submitted?: boolean;
+            error?: string;
+          })
+          .then((submission) => {
+            if (!submission.ok) {
+              setError(submission.error ?? "Could not check submission status.");
+              return;
+            }
+
+            if (submission.submitted) {
+              router.replace("/participant/uploads/submitted");
+              return;
+            }
+
+            setSubmissionChecked(true);
+          });
       })
-      .catch(() => setError("Could not load your team folder."));
+      .catch(() => {
+        setError("Could not load your team folder.");
+        setSubmissionChecked(true);
+      });
   }, [router]);
 
   function selectFiles(event: ChangeEvent<HTMLInputElement>) {
@@ -138,7 +175,7 @@ export function ParticipantUploadsContent() {
     }
   }
 
-  if (team === undefined && !error) {
+  if ((team === undefined || !submissionChecked) && !error) {
     return (
       <ParticipantShell title="Team Photo Upload">
         <div className="card p-5 text-sm font-semibold text-gray-600">
