@@ -29,9 +29,9 @@ export function TimePicker12({
   }
 
   return (
-    <div className="grid grid-cols-[minmax(76px,1fr)_minmax(76px,1fr)_auto] gap-2">
+    <div className="grid w-full min-w-0 grid-cols-[minmax(54px,1fr)_minmax(58px,1fr)_86px] gap-1.5">
       <select
-        className="field"
+        className="field min-h-10 min-w-0 px-2 py-2 text-sm"
         aria-label={`${label} hour`}
         value={parts.hour ?? ""}
         onChange={(event) => updateTime({ hour: event.target.value })}
@@ -40,7 +40,7 @@ export function TimePicker12({
         {hours.map((hour) => <option key={hour} value={hour}>{hour}</option>)}
       </select>
       <select
-        className="field"
+        className="field min-h-10 min-w-0 px-2 py-2 text-sm"
         aria-label={`${label} minute`}
         value={parts.minute ?? ""}
         onChange={(event) => updateTime({ minute: event.target.value })}
@@ -48,11 +48,11 @@ export function TimePicker12({
         <option value="" disabled>Min</option>
         {minutes.map((minute) => <option key={minute} value={minute}>{minute}</option>)}
       </select>
-      <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-gray-300 bg-white" aria-label={`${label} AM or PM`}>
+      <div className="grid min-w-0 grid-cols-2 overflow-hidden rounded-lg border border-gray-300 bg-white" aria-label={`${label} AM or PM`}>
         {(["AM", "PM"] as const).map((period) => (
           <button
             key={period}
-            className={`min-h-11 px-3 text-sm font-bold transition ${
+            className={`min-h-10 px-1.5 text-xs font-bold transition ${
               parts.period === period
                 ? "bg-bu-red text-white"
                 : "text-gray-700 hover:bg-gray-50"

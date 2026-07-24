@@ -63,7 +63,7 @@ export function CreateEventForm() {
         </label>
         <fieldset>
           <legend className="label">Event Start Time</legend>
-          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <div className="mt-2 grid gap-3 xl:grid-cols-[minmax(150px,0.8fr)_minmax(230px,1.2fr)]">
             <input
               className="field"
               type="date"
@@ -80,7 +80,7 @@ export function CreateEventForm() {
         </fieldset>
         <fieldset>
           <legend className="label">Submission Deadline</legend>
-          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <div className="mt-2 grid gap-3 xl:grid-cols-[minmax(150px,0.8fr)_minmax(230px,1.2fr)]">
             <input
               className="field"
               type="date"

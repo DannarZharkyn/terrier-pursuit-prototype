@@ -81,7 +81,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
 
       <fieldset>
         <legend className="label">Game Start Time</legend>
-        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+        <div className="mt-2 grid gap-3 md:grid-cols-[minmax(170px,0.8fr)_minmax(230px,1.2fr)]">
           <input
             className="field"
             type="date"
@@ -100,7 +100,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
 
       <fieldset>
         <legend className="label">Submission Deadline</legend>
-        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+        <div className="mt-2 grid gap-3 md:grid-cols-[minmax(170px,0.8fr)_minmax(230px,1.2fr)]">
           <input
             className="field"
             type="date"
