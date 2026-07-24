@@ -62,12 +62,48 @@ export default async function EventDashboardPage({
   ];
 
   return (
-    <OrganizerShell
-      title={dashboard.name}
-      subtitle="Monitor registration, team formation, and submission review progress."
-    >
+    <OrganizerShell title={dashboard.name}>
       <div className="mb-5">
         <PageBackLink href="/organizer/dashboard" label="Back to Dashboard" />
+      </div>
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {summary.map((item) => {
+          const Icon = item.icon;
+          const content = (
+            <>
+              <Icon className="h-6 w-6 text-bu-red" />
+              <p className="mt-4 text-3xl font-black text-gray-950">
+                {item.value}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-gray-600">
+                {item.label}
+              </p>
+              {item.href ? (
+                <p className="mt-4 text-sm font-bold text-bu-red">
+                  View list
+                </p>
+              ) : null}
+            </>
+          );
+
+          if (item.href) {
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="card block p-5 transition hover:-translate-y-0.5 hover:border-bu-red"
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <div key={item.label} className="card p-5">
+              {content}
+            </div>
+          );
+        })}
       </div>
       <section className="relative mb-6 rounded-lg bg-bu-red p-4 text-white shadow-soft sm:p-5">
         <Link
@@ -137,45 +173,6 @@ export default async function EventDashboardPage({
           />
         </div>
       </details>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {summary.map((item) => {
-          const Icon = item.icon;
-          const content = (
-            <>
-              <Icon className="h-6 w-6 text-bu-red" />
-              <p className="mt-4 text-3xl font-black text-gray-950">
-                {item.value}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-gray-600">
-                {item.label}
-              </p>
-              {item.href ? (
-                <p className="mt-4 text-sm font-bold text-bu-red">
-                  View list
-                </p>
-              ) : null}
-            </>
-          );
-
-          if (item.href) {
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="card block p-5 transition hover:-translate-y-0.5 hover:border-bu-red"
-              >
-                {content}
-              </Link>
-            );
-          }
-
-          return (
-            <div key={item.label} className="card p-5">
-              {content}
-            </div>
-          );
-        })}
-      </div>
       <details className="group mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 bg-gray-50 px-5 py-4 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2">

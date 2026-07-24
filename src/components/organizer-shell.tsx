@@ -13,7 +13,7 @@ export function OrganizerShell({
 }: {
   children: React.ReactNode;
   title: string;
-  subtitle: string;
+  subtitle?: string;
 }) {
   return (
     <div className="page-shell">
@@ -60,9 +60,11 @@ export function OrganizerShell({
               <h1 className="text-2xl font-black text-gray-950 sm:text-3xl">
                 {title}
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                {subtitle}
-              </p>
+              {subtitle ? (
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+                  {subtitle}
+                </p>
+              ) : null}
             </div>
           </header>
           {children}
