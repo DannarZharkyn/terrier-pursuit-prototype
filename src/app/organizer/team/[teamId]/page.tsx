@@ -1,5 +1,6 @@
 import { FolderOpen } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
+import { PageBackLink } from "@/components/page-back-link";
 import { PhotoGrid } from "@/components/photo-grid";
 import { teams } from "@/lib/mock-data";
 
@@ -11,6 +12,9 @@ export default function TeamReviewPage() {
       title="Team Review"
       subtitle="Review a team's shared folder and mark an outcome with visual-only controls."
     >
+      <div className="mb-5">
+        <PageBackLink href="/organizer/dashboard" label="Back to Dashboard" />
+      </div>
       <section className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside className="card p-5">
           <h2 className="text-xl font-black text-gray-950">{team.name}</h2>

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { OrganizerShell } from "@/components/organizer-shell";
+import { PageBackLink } from "@/components/page-back-link";
 import { UnassignedStudentsContent } from "@/components/unassigned-students-content";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -42,12 +42,10 @@ export default async function UnassignedStudentsPage({
       subtitle="Review every participant in this event who is not currently on a team."
     >
       <div className="mb-6">
-        <Link
+        <PageBackLink
           href={`/organizer/event/${params.eventId}`}
-          className="text-sm font-bold text-bu-red hover:text-bu-dark"
-        >
-          Back to Event Dashboard
-        </Link>
+          label="Back to Event"
+        />
       </div>
 
       <UnassignedStudentsContent

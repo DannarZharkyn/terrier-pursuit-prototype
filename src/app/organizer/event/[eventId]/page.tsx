@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { ArrowRight, CalendarCheck, CalendarClock, Clock, ClipboardCheck, MapPinned, Pencil, ScrollText, UserMinus, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
+import { PageBackLink } from "@/components/page-back-link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +63,9 @@ export default async function EventDashboardPage({
       title={dashboard.name}
       subtitle="Monitor registration, team formation, and submission review progress."
     >
+      <div className="mb-5">
+        <PageBackLink href="/organizer/dashboard" label="Back to Dashboard" />
+      </div>
       <section className="mb-6 rounded-lg bg-bu-red p-5 text-white shadow-soft sm:flex sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-red-100">Participant game code</p>

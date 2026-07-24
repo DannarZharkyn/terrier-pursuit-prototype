@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 import { EditEventForm } from "@/components/edit-event-form";
 import { OrganizerShell } from "@/components/organizer-shell";
+import { PageBackLink } from "@/components/page-back-link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,12 @@ export default async function EditEventPage({
       title="Edit Game"
       subtitle="Update the game name, start time, or rules."
     >
+      <div className="mb-5">
+        <PageBackLink
+          href={`/organizer/event/${params.eventId}`}
+          label="Back to Event"
+        />
+      </div>
       <EditEventForm
         event={{
           id: event.id as string,

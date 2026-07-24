@@ -2,6 +2,7 @@ import { AlertCircle } from "lucide-react";
 import { CreateEventPublishActions } from "@/components/create-event-publish-actions";
 import { CreateEventReviewSummary } from "@/components/create-event-review-summary";
 import { OrganizerShell } from "@/components/organizer-shell";
+import { PageBackLink } from "@/components/page-back-link";
 
 export default function PublishReviewPage() {
   return (
@@ -9,6 +10,9 @@ export default function PublishReviewPage() {
       title="Review & Publish"
       subtitle="Confirm the event details before saving the event."
     >
+      <div className="mx-auto mb-5 max-w-2xl">
+        <PageBackLink href="/organizer/create-event" label="Back to Event Form" />
+      </div>
       <section className="card mx-auto max-w-2xl p-6 sm:p-8">
         <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-bu-soft text-bu-red">
