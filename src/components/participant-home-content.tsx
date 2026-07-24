@@ -10,7 +10,6 @@ import {
   type ParticipantSession,
 } from "@/lib/participant-session";
 import type { ParticipantJoinResponse } from "@/lib/participant-join/types";
-import { clues } from "@/lib/mock-data";
 
 const second = 1000;
 
@@ -70,6 +69,7 @@ export function ParticipantHomeContent() {
   const hasValidStartTime = !Number.isNaN(startsAtTime);
   const remainingMs = hasValidStartTime ? Math.max(0, startsAtTime - now) : 0;
   const hasStarted = hasValidStartTime && remainingMs === 0;
+  const eventClues = session.event.clues ?? [];
 
   return (
     <ParticipantShell title="Game Home">
@@ -115,12 +115,16 @@ export function ParticipantHomeContent() {
             <h2 className="text-lg font-black text-gray-950">Destination Clues</h2>
           </div>
           <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1">
-            {clues.map((clue, index) => (
-              <div key={clue} className="rounded-lg bg-white p-4 text-sm leading-6 text-gray-700">
+            {eventClues.length ? eventClues.map((clue, index) => (
+              <div key={`${index}-${clue}`} className="rounded-lg bg-white p-4 text-sm leading-6 text-gray-700">
                 <span className="font-black text-bu-red">Clue {index + 1}: </span>
                 {clue}
               </div>
-            ))}
+            )) : (
+              <p className="rounded-lg bg-white p-4 text-sm text-gray-600">
+                No destination clues have been added for this game.
+              </p>
+            )}
           </div>
         </section>
       </div>

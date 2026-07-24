@@ -20,6 +20,10 @@ type ParticipantRow = {
   email: string;
 };
 
+type EventLocationRow = {
+  clue: string;
+};
+
 export async function POST(request: Request) {
   let body: unknown;
 
@@ -87,6 +91,15 @@ export async function POST(request: Request) {
   }
 
   const participant = participantData[0] as ParticipantRow;
+  const { data: locationData, error: locationError } = await supabase
+    .from("event_locations")
+    .select("clue")
+    .eq("event_id", event.id)
+    .order("position", { ascending: true });
+
+  if (locationError) {
+    return json({ ok: false, error: locationError.message }, 500);
+  }
 
   return json({
     ok: true,
@@ -103,6 +116,9 @@ export async function POST(request: Request) {
       startsAt: event.starts_at ?? "",
       submissionDeadline: event.submission_deadline ?? "",
       rules: event.rules ?? "",
+      clues: ((locationData ?? []) as unknown as EventLocationRow[])
+        .map((location) => location.clue.trim())
+        .filter(Boolean),
     },
   });
 }

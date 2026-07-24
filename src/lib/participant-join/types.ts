@@ -20,6 +20,7 @@ export type ParticipantJoinSuccess = {
     startsAt: string;
     submissionDeadline: string;
     rules: string;
+    clues: string[];
   };
 };
 
