@@ -69,6 +69,12 @@ export function ParticipantHomeContent() {
   const hasValidStartTime = !Number.isNaN(startsAtTime);
   const remainingMs = hasValidStartTime ? Math.max(0, startsAtTime - now) : 0;
   const hasStarted = hasValidStartTime && remainingMs === 0;
+  const submissionDeadlineTime = new Date(session.event.submissionDeadline).getTime();
+  const hasValidSubmissionDeadline = !Number.isNaN(submissionDeadlineTime);
+  const submissionRemainingMs = hasValidSubmissionDeadline
+    ? Math.max(0, submissionDeadlineTime - now)
+    : 0;
+  const submissionClosed = hasValidSubmissionDeadline && submissionRemainingMs === 0;
   const eventClues = session.event.clues ?? [];
 
   return (
@@ -90,11 +96,39 @@ export function ParticipantHomeContent() {
             </p>
           </div>
           <p className="mt-4 text-3xl font-black tabular-nums tracking-normal min-[360px]:text-4xl">
-            {hasValidStartTime ? formatCountdown(remainingMs) : "--:--:--"}
+            {!hasValidStartTime
+              ? "--:--:--"
+              : hasStarted
+                ? "Game started"
+                : formatCountdown(remainingMs)}
           </p>
           {hasValidStartTime ? (
             <p className="mt-3 text-sm font-semibold text-red-50">
               Starts {formatUsDateTime(session.event.startsAt)}
+            </p>
+          ) : null}
+        </section>
+        <section className="rounded-lg bg-gray-950 p-5 text-white shadow-soft">
+          <div className="flex items-center gap-3">
+            <Timer className="h-6 w-6" />
+            <p className="text-sm font-semibold text-gray-200">
+              {!hasValidSubmissionDeadline
+                ? "Submission deadline not set"
+                : submissionClosed
+                  ? "Submission deadline reached"
+                  : "Time until submission deadline"}
+            </p>
+          </div>
+          <p className="mt-4 text-3xl font-black tabular-nums tracking-normal min-[360px]:text-4xl">
+            {!hasValidSubmissionDeadline
+              ? "--:--:--"
+              : submissionClosed
+                ? "Time ended"
+                : formatCountdown(submissionRemainingMs)}
+          </p>
+          {hasValidSubmissionDeadline ? (
+            <p className="mt-3 text-sm font-semibold text-gray-200">
+              Submit by {formatUsDateTime(session.event.submissionDeadline)}
             </p>
           ) : null}
         </section>
@@ -115,7 +149,11 @@ export function ParticipantHomeContent() {
             <h2 className="text-lg font-black text-gray-950">Destination Clues</h2>
           </div>
           <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1">
-            {eventClues.length ? eventClues.map((clue, index) => (
+            {!hasStarted ? (
+              <p className="rounded-lg bg-white p-4 text-sm font-semibold text-gray-600">
+                Destination clues will become visible once the game starts.
+              </p>
+            ) : eventClues.length ? eventClues.map((clue, index) => (
               <div key={`${index}-${clue}`} className="rounded-lg bg-white p-4 text-sm leading-6 text-gray-700">
                 <span className="font-black text-bu-red">Clue {index + 1}: </span>
                 {clue}
