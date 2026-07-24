@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
-import { ArrowRight, CalendarClock, Clock, ClipboardCheck, MapPinned, ScrollText, UserMinus, Users } from "lucide-react";
+import { ArrowRight, CalendarClock, Clock, ClipboardCheck, MapPinned, Pencil, ScrollText, UserMinus, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -67,7 +67,16 @@ export default async function EventDashboardPage({
           <p className="text-xs font-bold uppercase tracking-widest text-red-100">Participant game code</p>
           <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em] sm:text-4xl">{dashboard.gameCode}</p>
         </div>
-        <p className="mt-3 max-w-sm text-sm leading-6 text-red-50 sm:mt-0 sm:text-right">Share this code with participants listed in this event&apos;s uploaded roster.</p>
+        <div className="mt-4 flex flex-col items-start gap-3 sm:mt-0 sm:items-end">
+          <p className="max-w-sm text-sm leading-6 text-red-50 sm:text-right">Share this code with participants listed in this event&apos;s uploaded roster.</p>
+          <Link
+            href={`/organizer/event/${params.eventId}/edit`}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-bu-red shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-200"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit Game
+          </Link>
+        </div>
       </section>
       <section className="mb-6 grid gap-4 lg:grid-cols-[minmax(240px,0.7fr)_minmax(0,1.3fr)]">
         <div className="card p-5">
