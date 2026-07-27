@@ -71,8 +71,15 @@ export async function POST(request: Request) {
 
   const eventId = stringValue(body.eventId);
   const participantId = stringValue(body.participantId);
+  const reviewedVersion =
+    typeof body.reviewedVersion === "number" ? body.reviewedVersion : 0;
 
-  if (!uuidPattern.test(eventId) || !uuidPattern.test(participantId)) {
+  if (
+    !uuidPattern.test(eventId) ||
+    !uuidPattern.test(participantId) ||
+    !Number.isInteger(reviewedVersion) ||
+    reviewedVersion < 1
+  ) {
     return json({ ok: false, error: "Event or participant ID is invalid." }, 400);
   }
 
@@ -83,13 +90,27 @@ export async function POST(request: Request) {
     return json({ ok: false, error: context.error }, context.status);
   }
 
+  if (reviewedVersion !== context.rulesVersion) {
+    return json(
+      {
+        ok: false,
+        updateRequired: true,
+        error: "The rules changed again. Please review the latest version.",
+        rules: context.rules,
+        rulesVersion: context.rulesVersion,
+        updatedAt: context.updatedAt,
+      },
+      409,
+    );
+  }
+
   const saved = await supabase
     .from("participant_rules_reviews")
     .upsert(
       {
         event_id: eventId,
         participant_id: participantId,
-        reviewed_version: context.rulesVersion,
+        reviewed_version: reviewedVersion,
         reviewed_at: new Date().toISOString(),
       },
       { onConflict: "event_id,participant_id" },
@@ -99,7 +120,7 @@ export async function POST(request: Request) {
     return json({ ok: false, error: saved.error.message }, 500);
   }
 
-  return json({ ok: true, reviewedVersion: context.rulesVersion });
+  return json({ ok: true, reviewedVersion });
 }
 
 async function getContext(

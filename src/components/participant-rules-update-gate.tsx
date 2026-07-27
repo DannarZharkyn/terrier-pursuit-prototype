@@ -73,11 +73,15 @@ export function ParticipantRulesUpdateGate({
         body: JSON.stringify({
           eventId: session.event.id,
           participantId: session.participant.id,
+          reviewedVersion: update?.rulesVersion,
         }),
       });
       const result = (await response.json()) as RulesReviewResponse;
 
       if (!result.ok) {
+        if (result.updateRequired && result.rules && result.rulesVersion) {
+          setUpdate(result);
+        }
         setError(result.error ?? "Could not save your rules review.");
         return;
       }
