@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowLeft, Check, Clipboard, Download, FolderOpen, ImageIcon, X } from "lucide-react";
+import { createStoreZip } from "@/lib/downloads/store-zip";
 
 type ReviewTeam = {
   name: string;
@@ -21,6 +22,9 @@ type ReviewTeam = {
 
 export function OrganizerTeamReviewContent({ team }: { team: ReviewTeam }) {
   const [copied, setCopied] = useState(false);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<string>();
+  const [downloadError, setDownloadError] = useState<string>();
   const [selectedPhoto, setSelectedPhoto] = useState<ReviewTeam["photos"][number]>();
   const emails = team.members.map((member) => member.email).filter(Boolean);
 
@@ -43,6 +47,50 @@ export function OrganizerTeamReviewContent({ team }: { team: ReviewTeam }) {
     await navigator.clipboard.writeText(emails.join(", "));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function downloadAllPictures() {
+    setIsDownloadingAll(true);
+    setDownloadError(undefined);
+
+    try {
+      const entries = [];
+
+      for (let index = 0; index < team.photos.length; index += 1) {
+        const photo = team.photos[index];
+        setDownloadProgress(`Preparing ${index + 1} of ${team.photos.length}...`);
+        const response = await fetch(photo.signedUrl);
+
+        if (!response.ok) {
+          throw new Error(`Could not download ${photo.originalName}.`);
+        }
+
+        const prefix = photo.clue
+          ? `clue-${String(photo.position).padStart(2, "0")}`
+          : `legacy-${String(index + 1).padStart(2, "0")}`;
+        entries.push({
+          name: `${prefix}-${safeFileName(photo.originalName)}`,
+          data: new Uint8Array(await response.arrayBuffer()),
+        });
+      }
+
+      const archive = createStoreZip(entries);
+      const url = URL.createObjectURL(new Blob([archive], { type: "application/zip" }));
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${safeFileName(team.name) || "team"}-pictures.zip`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error ? error.message : "Could not prepare the picture archive.",
+      );
+    } finally {
+      setIsDownloadingAll(false);
+      setDownloadProgress(undefined);
+    }
   }
 
   return (
@@ -94,6 +142,22 @@ export function OrganizerTeamReviewContent({ team }: { team: ReviewTeam }) {
                 </p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={downloadAllPictures}
+              disabled={!team.photos.length || isDownloadingAll}
+              className="btn-secondary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              {isDownloadingAll
+                ? downloadProgress || "Preparing ZIP..."
+                : "Download All Pictures"}
+            </button>
+            {downloadError ? (
+              <p className="mt-3 text-xs font-semibold leading-5 text-red-700">
+                {downloadError}
+              </p>
+            ) : null}
           </div>
           <p className="mt-4 text-xs font-semibold text-gray-500">
             Status: {team.status}
@@ -207,4 +271,12 @@ export function OrganizerTeamReviewContent({ team }: { team: ReviewTeam }) {
       ) : null}
     </>
   );
+}
+
+function safeFileName(value: string) {
+  return value
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
