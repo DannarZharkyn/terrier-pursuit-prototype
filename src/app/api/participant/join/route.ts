@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     return json({ ok: false, error: participantError.message }, 500);
   }
 
-  if (!participantData || participantData.length !== 1) {
+  if ((!participantData || participantData.length !== 1) && !validation.data.selfRegister) {
     return json(
       {
         ok: false,
@@ -91,7 +91,57 @@ export async function POST(request: Request) {
     );
   }
 
-  const participant = participantData[0] as ParticipantRow;
+  let participant = participantData?.[0] as ParticipantRow | undefined;
+
+  if (!participant) {
+    const { data: existingEmailData, error: existingEmailError } = await supabase
+      .from("participants")
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("normalized_email", validation.data.normalizedEmail);
+
+    if (existingEmailError) {
+      return json({ ok: false, error: existingEmailError.message }, 500);
+    }
+
+    if (existingEmailData && existingEmailData.length > 0) {
+      return json(
+        {
+          ok: false,
+          error:
+            "That email is already registered for this event. Sign in using the registered first and last name, or contact the organizer for help.",
+        },
+        409,
+      );
+    }
+
+    const { data: insertedParticipant, error: insertError } = await supabase
+      .from("participants")
+      .insert({
+        event_id: event.id,
+        first_name: validation.data.firstName,
+        last_name: validation.data.lastName,
+        email: validation.data.email,
+        normalized_first_name: validation.data.normalizedFirstName,
+        normalized_last_name: validation.data.normalizedLastName,
+        normalized_email: validation.data.normalizedEmail,
+        joined_at: new Date().toISOString(),
+      })
+      .select("id, first_name, last_name, email")
+      .single();
+
+    if (insertError || !insertedParticipant) {
+      return json(
+        {
+          ok: false,
+          error: insertError?.message ?? "Could not create your registration.",
+        },
+        500,
+      );
+    }
+
+    participant = insertedParticipant as ParticipantRow;
+  }
   const { data: locationData, error: locationError } = await supabase
     .from("event_locations")
     .select("clue")

@@ -21,6 +21,7 @@ export function validateParticipantJoinRequest(body: unknown): {
   const gameCode = stringValue(body.gameCode).trim();
   const normalizedEmail = email.toLowerCase();
   const normalizedGameCode = gameCode.toUpperCase();
+  const selfRegister = body.selfRegister === true;
 
   if (!firstName) {
     errors.push("First name is required.");
@@ -50,6 +51,7 @@ export function validateParticipantJoinRequest(body: unknown): {
       lastName,
       email,
       gameCode,
+      selfRegister,
       normalizedFirstName: firstName.toLowerCase(),
       normalizedLastName: lastName.toLowerCase(),
       normalizedEmail,

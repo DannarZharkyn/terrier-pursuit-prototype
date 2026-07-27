@@ -12,6 +12,7 @@ export function ParticipantJoinForm() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [gameCode, setGameCode] = useState("");
+  const [selfRegister, setSelfRegister] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string>();
   const [details, setDetails] = useState<string[]>();
@@ -33,6 +34,7 @@ export function ParticipantJoinForm() {
           lastName,
           email,
           gameCode,
+          selfRegister,
         }),
       });
       const result = (await response.json()) as ParticipantJoinResponse;
@@ -92,6 +94,22 @@ export function ParticipantJoinForm() {
             onChange={(event) => setGameCode(event.target.value)}
           />
         </label>
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <input
+            className="mt-1 h-4 w-4 accent-red-600"
+            type="checkbox"
+            checked={selfRegister}
+            onChange={(event) => setSelfRegister(event.target.checked)}
+          />
+          <span>
+            <span className="block text-sm font-bold text-gray-900">
+              I was not pre-registered
+            </span>
+            <span className="mt-1 block text-sm leading-5 text-gray-600">
+              Create my registration using the details above.
+            </span>
+          </span>
+        </label>
       </div>
 
       {error ? (
@@ -116,7 +134,13 @@ export function ParticipantJoinForm() {
           type="submit"
           disabled={isJoining}
         >
-          {isJoining ? "Joining..." : "Sign In"}
+          {isJoining
+            ? selfRegister
+              ? "Registering..."
+              : "Joining..."
+            : selfRegister
+              ? "Register & Sign In"
+              : "Sign In"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>

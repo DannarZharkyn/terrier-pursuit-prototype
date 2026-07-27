@@ -3,6 +3,7 @@ export type ParticipantJoinRequest = {
   lastName: string;
   email: string;
   gameCode: string;
+  selfRegister?: boolean;
 };
 
 export type ParticipantJoinSuccess = {

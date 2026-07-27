@@ -48,3 +48,15 @@ test("validateParticipantJoinRequest rejects non-object bodies", () => {
 
   assert.deepEqual(result.errors, ["Request body must be an object."]);
 });
+
+test("validateParticipantJoinRequest preserves an explicit self-registration choice", () => {
+  const result = validateParticipantJoinRequest({
+    firstName: "  Alex ",
+    lastName: " Morgan  ",
+    email: "Alex@BU.edu",
+    gameCode: " abc123 ",
+    selfRegister: true,
+  });
+
+  assert.equal(result.data?.selfRegister, true);
+});
