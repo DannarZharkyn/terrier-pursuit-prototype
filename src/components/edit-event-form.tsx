@@ -164,8 +164,12 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
 
       <label className="block">
         <span className="label">Game Rules</span>
+        <span className="mt-1 block text-sm leading-6 text-gray-600">
+          Saving changed rules creates a new version. Participants who previously
+          viewed the game must review the update before continuing.
+        </span>
         <textarea
-          className="field mt-2 min-h-48 resize-y"
+          className="field mt-2 min-h-[34rem] resize-y"
           value={rules}
           onChange={(inputEvent) => setRules(inputEvent.target.value)}
           required

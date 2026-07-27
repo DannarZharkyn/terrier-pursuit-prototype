@@ -10,6 +10,7 @@ import { saveCreateEventDraft } from "@/lib/imports/create-event-draft";
 import type { EventLocationImportResult } from "@/lib/imports/event-locations";
 import type { ParticipantImportResult } from "@/lib/imports/participants";
 import { defaultEventDisclaimer } from "@/lib/disclaimer/default";
+import { defaultEventRules } from "@/lib/rules/default";
 
 export function CreateEventForm() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export function CreateEventForm() {
   const [startTime, setStartTime] = useState("");
   const [submissionDate, setSubmissionDate] = useState("");
   const [submissionTime, setSubmissionTime] = useState("");
-  const [rules, setRules] = useState("");
+  const [rules, setRules] = useState(defaultEventRules);
   const [disclaimer, setDisclaimer] = useState(defaultEventDisclaimer);
   const [participantResult, setParticipantResult] = useState<ParticipantImportResult>();
   const [locationResult, setLocationResult] = useState<EventLocationImportResult>();
@@ -107,11 +108,14 @@ export function CreateEventForm() {
       <label className="mt-6 block">
         <span className="label flex items-center gap-2">
           <FileSpreadsheet className="h-4 w-4 text-bu-red" />
-          Rules Text Area
+          Participant Rules
+        </span>
+        <span className="mt-1 block text-sm leading-6 text-gray-600">
+          This short template is shown to participants. Adapt any event-specific
+          details while keeping the two-section format easy to scan.
         </span>
         <textarea
-          className="field mt-2 min-h-40 resize-none"
-          placeholder="Stay with your team, be respectful in public spaces, and submit all photos before the deadline."
+          className="field mt-2 min-h-[34rem] resize-y"
           value={rules}
           onChange={(event) => setRules(event.target.value)}
         />
