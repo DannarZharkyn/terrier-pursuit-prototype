@@ -382,7 +382,7 @@ async function getEventDashboard(eventId: string) {
     }
   }
 
-  const submissionByTeam = new Map<string, { status: string; submittedAt: string }>();
+  const submissionByTeam = new Map<string, { status: string; submittedAt: string | null }>();
 
   for (const submission of submissions.data ?? []) {
     const teamId = submission.team_id as string;
@@ -390,7 +390,7 @@ async function getEventDashboard(eventId: string) {
     if (!submissionByTeam.has(teamId)) {
       submissionByTeam.set(teamId, {
         status: submission.status as string,
-        submittedAt: submission.submitted_at as string,
+        submittedAt: submission.submitted_at as string | null,
       });
     }
   }
@@ -404,7 +404,7 @@ async function getEventDashboard(eventId: string) {
       memberCount: memberCounts.get(team.id as string) ?? 0,
       memberNames: memberNames.get(team.id as string) ?? [],
       submissionStatus: submission ? formatStatus(submission.status) : "Not Submitted",
-      submissionTime: submission ? formatTime(submission.submittedAt) : "-",
+      submissionTime: submission?.submittedAt ? formatTime(submission.submittedAt) : "-",
     };
   });
 
@@ -429,7 +429,9 @@ async function getEventDashboard(eventId: string) {
     participantCount: String(participants?.length ?? 0),
     teamCount: String(teamRows.length),
     unassignedCount: String(unassignedParticipantCount),
-    submittedTeamCount: String(submissionByTeam.size),
+    submittedTeamCount: String(
+      [...submissionByTeam.values()].filter((submission) => submission.status !== "draft").length,
+    ),
     teams: teamRows,
   };
 }

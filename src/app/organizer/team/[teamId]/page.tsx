@@ -65,7 +65,9 @@ async function getTeamReview(teamId: string) {
   const photos = submission.data
     ? await supabase
         .from("team_submission_photos")
-        .select("id, storage_path, original_name, position")
+        .select(
+          "id, storage_path, original_name, position, created_at, event_locations(clue), participants(first_name, last_name)",
+        )
         .eq("submission_id", submission.data.id)
         .order("position", { ascending: true })
     : { data: [], error: null };
@@ -75,15 +77,42 @@ async function getTeamReview(teamId: string) {
   }
 
   const photoRows = photos.data ?? [];
-  const signedUrls = photoRows.length
-    ? await supabase.storage
+  const signedPhotos = await Promise.all(
+    photoRows.map(async (photo) => {
+      const preview = await supabase.storage
         .from("game-submissions")
-        .createSignedUrls(photoRows.map((photo) => photo.storage_path as string), 3600)
-    : { data: [], error: null };
+        .createSignedUrl(photo.storage_path as string, 3600);
+      const download = await supabase.storage
+        .from("game-submissions")
+        .createSignedUrl(photo.storage_path as string, 3600, {
+          download: photo.original_name as string,
+        });
 
-  if (signedUrls.error) {
-    throw new Error(signedUrls.error.message);
-  }
+      if (preview.error || download.error) {
+        throw new Error(preview.error?.message || download.error?.message);
+      }
+
+      const location = Array.isArray(photo.event_locations)
+        ? photo.event_locations[0]
+        : photo.event_locations;
+      const uploader = Array.isArray(photo.participants)
+        ? photo.participants[0]
+        : photo.participants;
+
+      return {
+        id: photo.id as string,
+        originalName: photo.original_name as string,
+        signedUrl: preview.data.signedUrl,
+        downloadUrl: download.data.signedUrl,
+        clue: location?.clue as string | undefined,
+        position: photo.position as number,
+        uploadedAt: photo.created_at as string,
+        uploadedBy: uploader
+          ? `${uploader.first_name} ${uploader.last_name}`
+          : "Former team member",
+      };
+    }),
+  );
 
   return {
     name: teamResult.data.name as string,
@@ -99,10 +128,6 @@ async function getTeamReview(teamId: string) {
         email: participant.email as string,
       }] : [];
     }),
-    photos: photoRows.map((photo, index) => ({
-      id: photo.id as string,
-      originalName: photo.original_name as string,
-      signedUrl: signedUrls.data?.[index]?.signedUrl ?? "",
-    })).filter((photo) => photo.signedUrl),
+    photos: signedPhotos,
   };
 }

@@ -1,13 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Clipboard, FolderOpen, ImageIcon, X } from "lucide-react";
+import { ArrowLeft, Check, Clipboard, Download, FolderOpen, ImageIcon, X } from "lucide-react";
 
 type ReviewTeam = {
   name: string;
   status: string;
   members: { id: string; name: string; email: string }[];
-  photos: { id: string; originalName: string; signedUrl: string }[];
+  photos: {
+    id: string;
+    originalName: string;
+    signedUrl: string;
+    downloadUrl: string;
+    clue?: string;
+    position: number;
+    uploadedAt: string;
+    uploadedBy: string;
+  }[];
 };
 
 export function OrganizerTeamReviewContent({ team }: { team: ReviewTeam }) {
@@ -95,22 +104,44 @@ export function OrganizerTeamReviewContent({ team }: { team: ReviewTeam }) {
           {team.photos.length ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {team.photos.map((photo) => (
-                <button
+                <article
                   key={photo.id}
-                  type="button"
-                  onClick={() => setSelectedPhoto(photo)}
-                  className="group overflow-hidden rounded-lg border border-gray-200 bg-white text-left"
+                  className="overflow-hidden rounded-lg border border-gray-200 bg-white"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photo.signedUrl}
-                    alt={photo.originalName}
-                    className="aspect-square w-full object-cover transition group-hover:scale-[1.02]"
-                  />
-                  <p className="truncate px-3 py-2 text-xs font-semibold text-gray-600">
-                    {photo.originalName}
-                  </p>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPhoto(photo)}
+                    className="group block w-full text-left"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.signedUrl}
+                      alt={photo.originalName}
+                      className="aspect-square w-full object-cover transition group-hover:scale-[1.02]"
+                    />
+                  </button>
+                  <div className="space-y-2 p-3">
+                    <p className="text-xs font-black uppercase tracking-wide text-bu-red">
+                      {photo.clue ? `Clue ${photo.position}` : "Legacy upload"}
+                    </p>
+                    {photo.clue ? (
+                      <p className="line-clamp-3 text-xs font-semibold leading-5 text-gray-700">
+                        {photo.clue}
+                      </p>
+                    ) : null}
+                    <p className="text-xs text-gray-500">
+                      Uploaded by {photo.uploadedBy}
+                    </p>
+                    <a
+                      href={photo.downloadUrl}
+                      className="inline-flex items-center gap-2 text-xs font-black text-gray-800 hover:text-bu-red"
+                      download={photo.originalName}
+                    >
+                      <Download className="h-4 w-4" />
+                      Download
+                    </a>
+                  </div>
+                </article>
               ))}
             </div>
           ) : (
@@ -144,14 +175,24 @@ export function OrganizerTeamReviewContent({ team }: { team: ReviewTeam }) {
               <p className="min-w-0 truncate text-xs font-semibold text-gray-500 sm:text-sm">
                 {selectedPhoto.originalName}
               </p>
-              <button
-                type="button"
-                onClick={() => setSelectedPhoto(undefined)}
-                className="rounded-md p-2 text-gray-600 hover:bg-gray-100"
-                aria-label="Close photo"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <a
+                  href={selectedPhoto.downloadUrl}
+                  download={selectedPhoto.originalName}
+                  className="rounded-md p-2 text-gray-600 hover:bg-gray-100"
+                  aria-label="Download photo"
+                >
+                  <Download className="h-5 w-5" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhoto(undefined)}
+                  className="rounded-md p-2 text-gray-600 hover:bg-gray-100"
+                  aria-label="Close photo"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="flex min-h-0 flex-1 items-center justify-center bg-gray-950 p-2 sm:p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}

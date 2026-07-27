@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
   const submission = await supabase
     .from("team_hunt_submissions")
-    .select("id, submitted_at, team_submission_photos(count)")
+    .select("id, status, submitted_at")
     .eq("team_id", teamId)
     .maybeSingle();
 
@@ -43,16 +43,64 @@ export async function GET(request: Request) {
     return json({ ok: false, error: submission.error.message }, 500);
   }
 
-  const photoCounts = submission.data?.team_submission_photos as unknown as
-    | { count: number }[]
-    | undefined;
+  const locations = await supabase
+    .from("event_locations")
+    .select("id, position, clue")
+    .eq("event_id", context.eventId)
+    .order("position", { ascending: true });
+
+  if (locations.error) {
+    return json({ ok: false, error: locations.error.message }, 500);
+  }
+
+  const photos = submission.data
+    ? await supabase
+        .from("team_submission_photos")
+        .select(
+          "id, event_location_id, storage_path, original_name, created_at, uploaded_by_participant_id, participants(first_name, last_name)",
+        )
+        .eq("submission_id", submission.data.id)
+    : { data: [], error: null };
+
+  if (photos.error) {
+    return json({ ok: false, error: photos.error.message }, 500);
+  }
+
+  const photoRows = photos.data ?? [];
+  const signedPhotos = await Promise.all(
+    photoRows.map(async (photo) => {
+      const signed = await supabase.storage
+        .from(bucketName)
+        .createSignedUrl(photo.storage_path as string, 3600);
+      const uploader = Array.isArray(photo.participants)
+        ? photo.participants[0]
+        : photo.participants;
+
+      return {
+        id: photo.id,
+        locationId: photo.event_location_id,
+        originalName: photo.original_name,
+        signedUrl: signed.data?.signedUrl ?? "",
+        uploadedAt: photo.created_at,
+        uploadedBy: uploader
+          ? `${uploader.first_name} ${uploader.last_name}`
+          : "Former team member",
+      };
+    }),
+  );
 
   return json({
     ok: true,
-    submitted: Boolean(submission.data),
+    submitted: submission.data?.status !== "draft" && Boolean(submission.data),
     submissionId: submission.data?.id,
     submittedAt: submission.data?.submitted_at,
-    photoCount: photoCounts?.[0]?.count ?? 0,
+    locations: (locations.data ?? []).map((location) => ({
+      id: location.id,
+      position: location.position,
+      clue: location.clue,
+      photo:
+        signedPhotos.find((photo) => photo.locationId === location.id) ?? null,
+    })),
   });
 }
 
@@ -90,7 +138,7 @@ export async function POST(request: Request) {
 
   const existing = await supabase
     .from("team_hunt_submissions")
-    .select("id")
+    .select("id, status")
     .eq("team_id", teamId)
     .maybeSingle();
 
@@ -98,16 +146,31 @@ export async function POST(request: Request) {
     return json({ ok: false, error: existing.error.message }, 500);
   }
 
-  if (existing.data) {
+  if (existing.data && existing.data.status !== "draft") {
     return json({ ok: false, error: "This team has already submitted its pictures." }, 409);
   }
 
   if (action === "prepare") {
     const files = readFiles(body.files);
+    const locationId = stringValue(body.locationId);
     const fileError = validateFiles(files);
 
-    if (fileError) {
-      return json({ ok: false, error: fileError }, 400);
+    if (fileError || files.length !== 1 || !uuidPattern.test(locationId)) {
+      return json(
+        { ok: false, error: fileError || "Choose one valid clue for this picture." },
+        400,
+      );
+    }
+
+    const location = await supabase
+      .from("event_locations")
+      .select("id")
+      .eq("id", locationId)
+      .eq("event_id", context.eventId)
+      .maybeSingle();
+
+    if (location.error || !location.data) {
+      return json({ ok: false, error: "That clue does not belong to this event." }, 400);
     }
 
     const bucket = await ensureSubmissionBucket(supabase);
@@ -116,64 +179,169 @@ export async function POST(request: Request) {
       return json({ ok: false, error: bucket }, 500);
     }
 
-    const uploads = await Promise.all(files.map(async (file) => {
-      const extension = safeExtension(file.name, file.type);
-      const path = `${context.eventId}/${teamId}/${crypto.randomUUID()}.${extension}`;
-      const signed = await supabase.storage.from(bucketName).createSignedUploadUrl(path);
+    const file = files[0];
+    const extension = safeExtension(file.name, file.type);
+    const path = `${context.eventId}/${teamId}/${locationId}/${crypto.randomUUID()}.${extension}`;
+    const signed = await supabase.storage.from(bucketName).createSignedUploadUrl(path);
 
-      if (signed.error) {
-        throw new Error(signed.error.message);
-      }
+    if (signed.error) {
+      return json({ ok: false, error: signed.error.message }, 500);
+    }
 
-      return { path, token: signed.data.token };
-    }));
-
-    return json({ ok: true, uploads });
+    return json({ ok: true, uploads: [{ path, token: signed.data.token }] });
   }
 
-  if (action === "finalize") {
+  if (action === "save") {
     const files = readUploadedFiles(body.files);
+    const locationId = stringValue(body.locationId);
     const fileError = validateFiles(files);
 
-    if (fileError || files.some((file) => !file.path.startsWith(`${context.eventId}/${teamId}/`))) {
+    if (
+      fileError ||
+      files.length !== 1 ||
+      !uuidPattern.test(locationId) ||
+      !files[0].path.startsWith(`${context.eventId}/${teamId}/${locationId}/`)
+    ) {
       return json({ ok: false, error: fileError || "An uploaded file path is invalid." }, 400);
     }
 
-    const submission = await supabase
-      .from("team_hunt_submissions")
-      .insert({
-        event_id: context.eventId,
-        team_id: teamId,
-        submitted_by_participant_id: participantId,
-        status: "submitted",
-      })
-      .select("id")
-      .single();
+    const location = await supabase
+      .from("event_locations")
+      .select("position")
+      .eq("id", locationId)
+      .eq("event_id", context.eventId)
+      .maybeSingle();
 
-    if (submission.error || !submission.data) {
-      await supabase.storage.from(bucketName).remove(files.map((file) => file.path));
-      return json({ ok: false, error: submission.error?.message || "Could not create submission." }, 500);
+    if (location.error || !location.data) {
+      await supabase.storage.from(bucketName).remove([files[0].path]);
+      return json({ ok: false, error: "That clue does not belong to this event." }, 400);
     }
 
-    const photos = await supabase.from("team_submission_photos").insert(
-      files.map((file, index) => ({
-        submission_id: submission.data.id,
+    let submissionId = existing.data?.id as string | undefined;
+
+    if (!submissionId) {
+      const created = await supabase
+        .from("team_hunt_submissions")
+        .insert({
+          event_id: context.eventId,
+          team_id: teamId,
+          submitted_by_participant_id: participantId,
+          status: "draft",
+          submitted_at: null,
+        })
+        .select("id")
+        .single();
+
+      if (created.error || !created.data) {
+        if (created.error?.code === "23505") {
+          const concurrentDraft = await supabase
+            .from("team_hunt_submissions")
+            .select("id, status")
+            .eq("team_id", teamId)
+            .maybeSingle();
+
+          if (concurrentDraft.data?.status === "draft") {
+            submissionId = concurrentDraft.data.id as string;
+          } else {
+            await supabase.storage.from(bucketName).remove([files[0].path]);
+            return json(
+              { ok: false, error: "The team entry was submitted while this photo was uploading." },
+              409,
+            );
+          }
+        } else {
+          await supabase.storage.from(bucketName).remove([files[0].path]);
+          return json(
+            { ok: false, error: created.error?.message || "Could not save this photo." },
+            500,
+          );
+        }
+      } else {
+        submissionId = created.data.id as string;
+      }
+    }
+
+    const priorPhoto = await supabase
+      .from("team_submission_photos")
+      .select("id, storage_path")
+      .eq("submission_id", submissionId)
+      .eq("event_location_id", locationId)
+      .maybeSingle();
+
+    if (priorPhoto.error) {
+      await supabase.storage.from(bucketName).remove([files[0].path]);
+      return json({ ok: false, error: priorPhoto.error.message }, 500);
+    }
+
+    const file = files[0];
+    const photoValues = {
+        submission_id: submissionId,
         uploaded_by_participant_id: participantId,
+        event_location_id: locationId,
         storage_path: file.path,
         original_name: file.name,
         mime_type: file.type,
         file_size_bytes: file.size,
-        position: index + 1,
-      })),
-    );
+        position: location.data.position,
+        created_at: new Date().toISOString(),
+      };
+    const saved = priorPhoto.data
+      ? await supabase
+          .from("team_submission_photos")
+          .update(photoValues)
+          .eq("id", priorPhoto.data.id)
+      : await supabase.from("team_submission_photos").insert(photoValues);
 
-    if (photos.error) {
-      await supabase.from("team_hunt_submissions").delete().eq("id", submission.data.id);
-      await supabase.storage.from(bucketName).remove(files.map((file) => file.path));
-      return json({ ok: false, error: photos.error.message }, 500);
+    if (saved.error) {
+      await supabase.storage.from(bucketName).remove([file.path]);
+      return json({ ok: false, error: saved.error.message }, 500);
     }
 
-    return json({ ok: true, submissionId: submission.data.id, photoCount: files.length });
+    if (priorPhoto.data?.storage_path) {
+      await supabase.storage.from(bucketName).remove([priorPhoto.data.storage_path]);
+    }
+
+    return json({ ok: true, submissionId });
+  }
+
+  if (action === "finalize") {
+    if (!existing.data) {
+      return json({ ok: false, error: "Save a photo for each clue before submitting." }, 409);
+    }
+
+    const locationCount = await supabase
+      .from("event_locations")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", context.eventId);
+    const photoCount = await supabase
+      .from("team_submission_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("submission_id", existing.data.id)
+      .not("event_location_id", "is", null);
+
+    if (locationCount.error || photoCount.error) {
+      return json({ ok: false, error: locationCount.error?.message || photoCount.error?.message }, 500);
+    }
+
+    if (!locationCount.count || photoCount.count !== locationCount.count) {
+      return json({ ok: false, error: "Save one photo for every clue before submitting." }, 409);
+    }
+
+    const finalized = await supabase
+      .from("team_hunt_submissions")
+      .update({
+        status: "submitted",
+        submitted_by_participant_id: participantId,
+        submitted_at: new Date().toISOString(),
+      })
+      .eq("id", existing.data.id)
+      .eq("status", "draft");
+
+    if (finalized.error) {
+      return json({ ok: false, error: finalized.error.message }, 500);
+    }
+
+    return json({ ok: true, submissionId: existing.data.id, photoCount: photoCount.count });
   }
 
   return json({ ok: false, error: "Submission action is invalid." }, 400);
