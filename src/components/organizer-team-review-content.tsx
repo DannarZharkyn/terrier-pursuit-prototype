@@ -6,6 +6,7 @@ import { createStoreZip } from "@/lib/downloads/store-zip";
 
 type ReviewTeam = {
   name: string;
+  eventName: string;
   status: string;
   members: { id: string; name: string; email: string }[];
   photos: {
@@ -78,7 +79,9 @@ export function OrganizerTeamReviewContent({ team }: { team: ReviewTeam }) {
       const url = URL.createObjectURL(new Blob([archive], { type: "application/zip" }));
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${safeFileName(team.name) || "team"}-pictures.zip`;
+      anchor.download = `${safeFileName(team.eventName) || "game"}-team-submission-${
+        safeFileName(team.name) || "team"
+      }.zip`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();

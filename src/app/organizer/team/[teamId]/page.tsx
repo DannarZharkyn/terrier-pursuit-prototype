@@ -40,7 +40,7 @@ async function getTeamReview(teamId: string) {
   const supabase = createSupabaseAdminClient();
   const teamResult = await supabase
     .from("teams")
-    .select("id, name, event_id")
+    .select("id, name, event_id, events(name)")
     .eq("id", teamId)
     .maybeSingle();
 
@@ -116,6 +116,12 @@ async function getTeamReview(teamId: string) {
 
   return {
     name: teamResult.data.name as string,
+    eventName: (() => {
+      const event = Array.isArray(teamResult.data.events)
+        ? teamResult.data.events[0]
+        : teamResult.data.events;
+      return (event?.name as string | undefined) ?? "Terrier Pursuit";
+    })(),
     eventId: teamResult.data.event_id as string,
     status: submission.data ? String(submission.data.status) : "Not submitted",
     members: (memberships.data ?? []).flatMap((membership) => {
