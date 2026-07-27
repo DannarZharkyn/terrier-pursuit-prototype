@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { normalizeLegacyPunctuation } from "@/lib/text/normalize-legacy-punctuation";
 
 const bucketName = "game-submissions";
 const maxFileSize = 10 * 1024 * 1024;
@@ -97,7 +98,7 @@ export async function GET(request: Request) {
     locations: (locations.data ?? []).map((location) => ({
       id: location.id,
       position: location.position,
-      clue: location.clue,
+      clue: normalizeLegacyPunctuation(location.clue as string),
       photo:
         signedPhotos.find((photo) => photo.locationId === location.id) ?? null,
     })),
