@@ -81,6 +81,7 @@ export async function PATCH(
   const startsAt = stringValue(body.startsAt).trim();
   const submissionDeadline = stringValue(body.submissionDeadline).trim();
   const rules = stringValue(body.rules).trim();
+  const disclaimer = stringValue(body.disclaimer).trim();
   const emailSubject = stringValue(body.emailSubject).trim();
   const emailBody = stringValue(body.emailBody).trim();
   const parsedStartsAt = new Date(startsAt);
@@ -106,6 +107,10 @@ export async function PATCH(
     return jsonUpdate({ ok: false, error: "Game rules are required." }, 400);
   }
 
+  if (!disclaimer) {
+    return jsonUpdate({ ok: false, error: "Participant disclaimer is required." }, 400);
+  }
+
   if (!emailSubject || emailSubject.length > 200) {
     return jsonUpdate({ ok: false, error: "Email subject must be between 1 and 200 characters." }, 400);
   }
@@ -115,6 +120,34 @@ export async function PATCH(
   }
 
   const supabase = createSupabaseAdminClient();
+  const currentEvent = await supabase
+    .from("events")
+    .select("disclaimer_text, disclaimer_locked_at")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (currentEvent.error) {
+    return jsonUpdate({ ok: false, error: currentEvent.error.message }, 500);
+  }
+
+  if (!currentEvent.data) {
+    return jsonUpdate({ ok: false, error: "Event was not found." }, 404);
+  }
+
+  if (
+    currentEvent.data.disclaimer_locked_at &&
+    disclaimer !== currentEvent.data.disclaimer_text
+  ) {
+    return jsonUpdate(
+      {
+        ok: false,
+        error:
+          "The disclaimer is locked because a participant has already accepted it.",
+      },
+      409,
+    );
+  }
+
   const { data, error } = await supabase
     .from("events")
     .update({
@@ -122,6 +155,7 @@ export async function PATCH(
       starts_at: parsedStartsAt.toISOString(),
       submission_deadline: parsedSubmissionDeadline.toISOString(),
       rules,
+      disclaimer_text: disclaimer,
       email_subject: emailSubject,
       email_body: emailBody,
     })

@@ -116,6 +116,7 @@ async function insertEventWithUniqueGameCode(
     startsAt: string;
     submissionDeadline: string;
     rules: string;
+    disclaimer: string;
   },
   participantUrl: string,
 ) {
@@ -139,6 +140,7 @@ async function insertEventWithUniqueGameCode(
         submission_deadline: event.submissionDeadline,
         data_deletion_scheduled_at: getDataDeletionScheduledAt(event.submissionDeadline),
         rules: event.rules,
+        disclaimer_text: event.disclaimer,
         email_subject: emailTemplate.subject,
         email_body: emailTemplate.body,
       })

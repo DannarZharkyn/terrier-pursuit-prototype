@@ -46,7 +46,7 @@ export function ParticipantJoinForm() {
       }
 
       saveParticipantSession(result);
-      router.push("/participant/team-options");
+      router.push("/participant/disclaimer");
     } catch {
       setError("Could not reach the join API. Please try again.");
     } finally {

@@ -39,6 +39,7 @@ export function validatePublishEventRequest(body: unknown): {
       errors,
     ),
     rules: stringValue(event.rules).trim(),
+    disclaimer: stringValue(event.disclaimer).trim(),
   };
 
   if (!normalizedEvent.name) {
@@ -47,6 +48,10 @@ export function validatePublishEventRequest(body: unknown): {
 
   if (!normalizedEvent.rules) {
     errors.push("Rules are required.");
+  }
+
+  if (!normalizedEvent.disclaimer) {
+    errors.push("Participant disclaimer is required.");
   }
 
   const normalizedParticipants = participants.map((participant, index) => {

@@ -7,6 +7,7 @@ export type CreateEventDraft = {
     startsAt: string;
     submissionDeadline: string;
     rules: string;
+    disclaimer: string;
   };
   participants: ParsedParticipant[];
   locations: ParsedEventLocation[];

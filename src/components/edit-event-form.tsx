@@ -12,6 +12,8 @@ type EditableEvent = {
   startsAt: string;
   submissionDeadline: string;
   rules: string;
+  disclaimer: string;
+  disclaimerLocked: boolean;
   emailSubject: string;
   emailBody: string;
 };
@@ -26,6 +28,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
   const [submissionDate, setSubmissionDate] = useState(toDateInputValue(initialSubmissionDeadline));
   const [submissionTime, setSubmissionTime] = useState(toTimeInputValue(initialSubmissionDeadline));
   const [rules, setRules] = useState(event.rules);
+  const [disclaimer, setDisclaimer] = useState(event.disclaimer);
   const [emailSubject, setEmailSubject] = useState(event.emailSubject);
   const [emailBody, setEmailBody] = useState(event.emailBody);
   const [isSaving, setIsSaving] = useState(false);
@@ -37,6 +40,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
     && startsAt
     && submissionDeadline
     && rules.trim()
+    && disclaimer.trim()
     && emailSubject.trim()
     && emailBody.trim(),
   );
@@ -64,6 +68,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
           startsAt,
           submissionDeadline,
           rules,
+          disclaimer,
           emailSubject,
           emailBody,
         }),
@@ -95,6 +100,28 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
           maxLength={120}
           required
         />
+      </label>
+
+      <label className="block">
+        <span className="label">Participant Disclaimer</span>
+        <span className="mt-1 block text-sm leading-6 text-gray-600">
+          {event.disclaimerLocked
+            ? "Locked because at least one participant accepted this exact wording."
+            : "Participants must accept this wording before entering the platform."}
+        </span>
+        <textarea
+          className="field mt-2 min-h-[32rem] resize-y disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-600"
+          value={disclaimer}
+          onChange={(inputEvent) => setDisclaimer(inputEvent.target.value)}
+          disabled={event.disclaimerLocked}
+          required
+        />
+        {event.disclaimerLocked ? (
+          <span className="mt-2 block rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs font-semibold leading-5 text-gray-700">
+            To use different wording, create a new event so every participant
+            accepts the same disclaimer.
+          </span>
+        ) : null}
       </label>
 
       <fieldset>

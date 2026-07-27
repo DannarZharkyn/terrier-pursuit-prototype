@@ -4,6 +4,7 @@ export type PublishEventRequest = {
     startsAt: string;
     submissionDeadline: string;
     rules: string;
+    disclaimer: string;
   };
   participants: {
     firstName: string;

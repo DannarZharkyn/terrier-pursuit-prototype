@@ -9,6 +9,7 @@ import { TimePicker12 } from "@/components/time-picker-12";
 import { saveCreateEventDraft } from "@/lib/imports/create-event-draft";
 import type { EventLocationImportResult } from "@/lib/imports/event-locations";
 import type { ParticipantImportResult } from "@/lib/imports/participants";
+import { defaultEventDisclaimer } from "@/lib/disclaimer/default";
 
 export function CreateEventForm() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export function CreateEventForm() {
   const [submissionDate, setSubmissionDate] = useState("");
   const [submissionTime, setSubmissionTime] = useState("");
   const [rules, setRules] = useState("");
+  const [disclaimer, setDisclaimer] = useState(defaultEventDisclaimer);
   const [participantResult, setParticipantResult] = useState<ParticipantImportResult>();
   const [locationResult, setLocationResult] = useState<EventLocationImportResult>();
   const startsAt = toLocalIsoDateTime(startDate, startTime);
@@ -27,6 +29,7 @@ export function CreateEventForm() {
     Boolean(startsAt) &&
     Boolean(submissionDeadline) &&
     rules.trim().length > 0 &&
+    disclaimer.trim().length > 0 &&
     participantResult?.ok === true &&
     locationResult?.ok === true;
 
@@ -41,6 +44,7 @@ export function CreateEventForm() {
         startsAt,
         submissionDeadline,
         rules: rules.trim(),
+        disclaimer: disclaimer.trim(),
       },
       participants: participantResult.participants,
       locations: locationResult.locations,
@@ -111,6 +115,22 @@ export function CreateEventForm() {
           value={rules}
           onChange={(event) => setRules(event.target.value)}
         />
+      </label>
+      <label className="mt-6 block">
+        <span className="label">Participant Disclaimer</span>
+        <span className="mt-1 block text-sm leading-6 text-gray-600">
+          Participants must accept this wording before entering the platform.
+          Once one participant accepts, it can no longer be edited.
+        </span>
+        <textarea
+          className="field mt-2 min-h-[32rem] resize-y"
+          value={disclaimer}
+          onChange={(event) => setDisclaimer(event.target.value)}
+        />
+        <span className="mt-2 block rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-900">
+          Have the sponsoring BU office review this prototype wording and
+          determine whether a separate official waiver or media release is required.
+        </span>
       </label>
       <div className="mt-8 flex flex-col items-stretch gap-3 sm:items-end">
         {canReview ? (

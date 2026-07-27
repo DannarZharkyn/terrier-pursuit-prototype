@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
-import { ArrowRight, CalendarCheck, CalendarClock, ChevronDown, Clock, ClipboardCheck, Mail, MapPinned, Pencil, ScrollText, UserMinus, Users } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarClock, ChevronDown, Clock, ClipboardCheck, Lock, Mail, MapPinned, Pencil, ScrollText, ShieldCheck, UserMinus, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { EventEmailTemplate } from "@/components/event-email-template";
@@ -152,6 +152,28 @@ export default async function EventDashboardPage({
           </div>
         </details>
       </section>
+      <section className="mb-6">
+        <details className="group card overflow-hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 text-bu-red">
+              <ShieldCheck className="h-5 w-5" />
+              <span className="font-black text-gray-950">Participant Disclaimer</span>
+              {dashboard.disclaimerLocked ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-200 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-gray-700">
+                  <Lock className="h-3 w-3" />
+                  Locked
+                </span>
+              ) : null}
+            </span>
+            <ChevronDown className="h-5 w-5 shrink-0 text-gray-500 transition group-open:rotate-180" />
+          </summary>
+          <div className="border-t border-gray-200 bg-white px-5 py-4">
+            <p className="whitespace-pre-wrap text-sm leading-6 text-gray-700">
+              {dashboard.disclaimer}
+            </p>
+          </div>
+        </details>
+      </section>
       <details className="group mb-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-3">
@@ -281,7 +303,7 @@ async function getEventDashboard(eventId: string) {
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, name, game_code, starts_at, submission_deadline, rules, email_subject, email_body")
+    .select("id, name, game_code, starts_at, submission_deadline, rules, disclaimer_text, disclaimer_locked_at, email_subject, email_body")
     .eq("id", eventId)
     .single();
 
@@ -418,6 +440,8 @@ async function getEventDashboard(eventId: string) {
       ? formatEventDateTime(event.submission_deadline as string)
       : "Not scheduled",
     rules: (event.rules as string | null) ?? "No rules were provided.",
+    disclaimer: (event.disclaimer_text as string | null) ?? "No disclaimer was provided.",
+    disclaimerLocked: Boolean(event.disclaimer_locked_at),
     emailRecipients: participantRows.map((participant) => participant.email).join(", "),
     emailSubject: (event.email_subject as string | null) ?? generatedEmail.subject,
     emailBody: (event.email_body as string | null) ?? generatedEmail.body,

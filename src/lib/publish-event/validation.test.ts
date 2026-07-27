@@ -7,6 +7,7 @@ const validEvent = {
   startsAt: "2026-07-21T10:00",
   submissionDeadline: "2026-07-21T13:00",
   rules: "Stay with your team.",
+  disclaimer: "I understand and accept the participant disclaimer.",
 };
 
 const validParticipant = {
@@ -34,6 +35,7 @@ test("validatePublishEventRequest requires all organizer event fields", () => {
       startsAt: "",
       submissionDeadline: "",
       rules: "",
+      disclaimer: "",
     },
     participants: [validParticipant],
     locations: [validLocation],
@@ -58,4 +60,8 @@ test("validatePublishEventRequest stores event dates as ISO strings", () => {
   assert.match(result.data?.event.startsAt ?? "", /T/);
   assert.match(result.data?.event.submissionDeadline ?? "", /T/);
   assert.equal(result.data?.event.rules, "Stay with your team.");
+  assert.equal(
+    result.data?.event.disclaimer,
+    "I understand and accept the participant disclaimer.",
+  );
 });

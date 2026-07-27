@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FolderOpen, Home, User, Users } from "lucide-react";
 import { Logo } from "./logo";
+import { ParticipantConsentGate } from "./participant-consent-gate";
 
 const tabs = [
   { href: "/participant/home", label: "Home", icon: Home },
@@ -17,7 +18,8 @@ export function ParticipantShell({
   title: string;
 }) {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gray-100">
+    <ParticipantConsentGate>
+      <div className="min-h-screen overflow-x-hidden bg-gray-100">
       <main className="mx-auto min-h-screen max-w-md bg-white pb-28 shadow-soft">
         <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-5">
           <Logo href="/participant/home" />
@@ -42,6 +44,7 @@ export function ParticipantShell({
           })}
         </div>
       </nav>
-    </div>
+      </div>
+    </ParticipantConsentGate>
   );
 }
