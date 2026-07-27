@@ -119,7 +119,7 @@ async function getContext(
 ) {
   const participant = await supabase
     .from("participants")
-    .select("id, events!inner(id, name, disclaimer_text)")
+    .select("id")
     .eq("id", participantId)
     .eq("event_id", eventId)
     .maybeSingle();
@@ -136,14 +136,24 @@ async function getContext(
     };
   }
 
-  const event = Array.isArray(participant.data.events)
-    ? participant.data.events[0]
-    : participant.data.events;
+  const event = await supabase
+    .from("events")
+    .select("name, disclaimer_text")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (event.error) {
+    return { ok: false as const, error: event.error.message, status: 500 };
+  }
+
+  if (!event.data) {
+    return { ok: false as const, error: "Event not found.", status: 404 };
+  }
 
   return {
     ok: true as const,
-    eventName: event.name as string,
-    disclaimer: event.disclaimer_text as string,
+    eventName: event.data.name as string,
+    disclaimer: event.data.disclaimer_text as string,
   };
 }
 
