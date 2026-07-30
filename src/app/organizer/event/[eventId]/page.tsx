@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
-import { ArrowRight, CalendarCheck, CalendarClock, ChevronDown, Clock, ClipboardCheck, Lock, Mail, MapPinned, Pencil, ScrollText, ShieldCheck, UserMinus, Users } from "lucide-react";
+import { CalendarCheck, CalendarClock, ChevronDown, Clock, ClipboardCheck, Lock, Mail, MapPinned, Pencil, ScrollText, ShieldCheck, UserMinus, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { EventEmailTemplate } from "@/components/event-email-template";
@@ -57,6 +57,14 @@ export default async function EventDashboardPage({
       value: dashboard.unassignedCount,
       icon: UserMinus,
       href: `/organizer/event/${params.eventId}/unassigned`,
+      viewLabel: "View list",
+    },
+    {
+      label: "Submitted Teams",
+      value: dashboard.submittedTeamCount,
+      icon: Clock,
+      href: `/organizer/event/${params.eventId}/teams`,
+      viewLabel: "View Teams",
     },
   ];
 
@@ -79,7 +87,7 @@ export default async function EventDashboardPage({
               </p>
               {item.href ? (
                 <p className="mt-4 text-sm font-bold text-bu-red">
-                  View list
+                  {item.viewLabel}
                 </p>
               ) : null}
             </>
@@ -103,95 +111,6 @@ export default async function EventDashboardPage({
             </div>
           );
         })}
-        <details className="group contents">
-          <summary className="card block cursor-pointer list-none p-5 transition hover:-translate-y-0.5 hover:border-bu-red focus:outline-none focus:ring-2 focus:ring-bu-red [&::-webkit-details-marker]:hidden">
-            <Clock className="h-6 w-6 text-bu-red" />
-            <p className="mt-4 text-3xl font-black text-gray-950">
-              {dashboard.submittedTeamCount}
-            </p>
-            <p className="mt-1 text-sm font-semibold text-gray-600">
-              Submitted Teams
-            </p>
-            <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-bu-red">
-              <span className="group-open:hidden">View Teams</span>
-              <span className="hidden group-open:inline">Hide Teams</span>
-              <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
-            </p>
-          </summary>
-          <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-soft sm:col-span-2 xl:col-span-4">
-            <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
-              <h2 className="text-lg font-black text-gray-950">Teams</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="bg-white text-xs uppercase text-gray-500">
-                  <tr>
-                    <th className="px-5 py-3">Team Name</th>
-                    <th className="px-5 py-3">Members</th>
-                    <th className="px-5 py-3">Submission Status</th>
-                    <th className="px-5 py-3">Submission Time</th>
-                    <th className="px-5 py-3">Review</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {dashboard.teams.length ? (
-                    dashboard.teams.map((team) => (
-                      <tr key={team.id} className="bg-white">
-                        <td className="px-5 py-4 font-bold text-gray-950">
-                          {team.name}
-                        </td>
-                        <td className="px-5 py-4 text-gray-600">
-                          <details className="group w-fit">
-                            <summary className="cursor-pointer list-none rounded-md px-2 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-bu-red [&::-webkit-details-marker]:hidden">
-                              <span className="inline-flex items-center gap-1.5">
-                                <Users className="h-3.5 w-3.5" />
-                                {team.memberCount} members
-                              </span>
-                            </summary>
-                            <div className="mt-2 min-w-36 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
-                              {team.memberNames.length ? (
-                                <ul className="space-y-0.5 text-xs font-medium text-gray-700">
-                                  {team.memberNames.map((memberName, index) => (
-                                    <li key={`${memberName}-${index}`}>{memberName}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-xs text-gray-500">No members yet.</p>
-                              )}
-                            </div>
-                          </details>
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className="status-pill bg-bu-soft text-bu-dark">
-                            {team.submissionStatus}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-gray-600">
-                          {team.submissionTime}
-                        </td>
-                        <td className="px-5 py-4">
-                          <Link
-                            href={`/organizer/team/${team.id}`}
-                            className="btn-secondary py-2"
-                          >
-                            Review
-                            <ArrowRight className="h-4 w-4" />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="bg-white">
-                      <td className="px-5 py-4 text-gray-600" colSpan={5}>
-                        No teams have been created for this event yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </details>
       </div>
       <section className="relative mb-6 rounded-lg bg-bu-red p-4 text-white shadow-soft sm:p-5">
         <Link
