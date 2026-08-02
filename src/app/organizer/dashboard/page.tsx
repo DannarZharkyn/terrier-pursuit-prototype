@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { unstable_noStore as noStore } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { CalendarPlus } from "lucide-react";
 import { OrganizerEventList } from "@/components/organizer-event-list";
 import { OrganizerShell } from "@/components/organizer-shell";
@@ -8,8 +8,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 
 export default async function OrganizerDashboardPage() {
-  noStore();
-  const events = await getOrganizerEvents();
+  const events = await getCachedOrganizerEvents();
 
   return (
     <OrganizerShell
@@ -36,21 +35,29 @@ export default async function OrganizerDashboardPage() {
   );
 }
 
+const getCachedOrganizerEvents = unstable_cache(
+  getOrganizerEvents,
+  ["organizer-dashboard-events"],
+  { revalidate: 5 },
+);
+
 async function getOrganizerEvents() {
   const supabase = createSupabaseAdminClient();
 
-  const { data: eventRows, error: eventError } = await supabase
-    .from("events")
-    .select("id, name, game_code, status, starts_at, created_at")
-    .order("created_at", { ascending: false });
+  const [eventResult, teamResult] = await Promise.all([
+    supabase
+      .from("events")
+      .select("id, name, game_code, status, starts_at, created_at")
+      .order("created_at", { ascending: false }),
+    supabase.from("teams").select("event_id"),
+  ]);
+
+  const { data: eventRows, error: eventError } = eventResult;
+  const { data: teamRows, error: teamError } = teamResult;
 
   if (eventError) {
     throw new Error(`Could not load organizer events: ${eventError.message}`);
   }
-
-  const { data: teamRows, error: teamError } = await supabase
-    .from("teams")
-    .select("event_id");
 
   if (teamError) {
     throw new Error(`Could not load event team counts: ${teamError.message}`);

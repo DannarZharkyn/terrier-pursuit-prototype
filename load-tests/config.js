@@ -19,6 +19,16 @@ const profiles = {
     { duration: "5m", target: 100 },
     { duration: "1m", target: 0 },
   ],
+  oneFifty: [
+    { duration: "3m", target: 150 },
+    { duration: "5m", target: 150 },
+    { duration: "1m", target: 0 },
+  ],
+  oneFiftyDiagnostic: [
+    { duration: "2m", target: 150 },
+    { duration: "2m", target: 150 },
+    { duration: "30s", target: 0 },
+  ],
   fiveHundred: [
     { duration: "5m", target: 500 },
     { duration: "10m", target: 500 },
@@ -37,7 +47,7 @@ export function testConfig() {
 
   if (!stages) {
     throw new Error(
-      `Unknown PROFILE "${profileName}". Use smoke, five, twentyFive, hundred, fiveHundred, or thousand.`,
+      `Unknown PROFILE "${profileName}". Use smoke, five, twentyFive, hundred, oneFifty, oneFiftyDiagnostic, fiveHundred, or thousand.`,
     );
   }
 
@@ -53,6 +63,8 @@ export function testConfig() {
     thresholds: {
       http_req_failed: ["rate<0.01"],
       http_req_duration: ["p(95)<1000", "p(99)<3000"],
+      "http_req_duration{name:participant_welcome_page}": ["p(95)<1000"],
+      "http_req_duration{name:organizer_dashboard}": ["p(95)<1000"],
       journey_failures: ["rate<0.01"],
       "http_req_duration{name:participant_join}": ["p(95)<2000"],
       "http_req_duration{name:disclaimer_get}": ["p(95)<1000"],

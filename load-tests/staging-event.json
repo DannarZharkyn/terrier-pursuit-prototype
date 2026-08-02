@@ -1,0 +1,29 @@
+{
+  "event": {
+    "name": "Load Testing Event",
+    "startsAt": "2026-08-15T14:00:00-04:00",
+    "submissionDeadline": "2026-08-15T18:00:00-04:00",
+    "rules": "This staging event exists only for controlled load testing. Do not use real participant information.",
+    "disclaimer": "This is a staging-only load-test event using synthetic participants and no real-world activity."
+  },
+  "participants": [
+    {
+      "firstName": "Seed",
+      "lastName": "Tester",
+      "email": "seed-tester@example.com",
+      "normalizedFirstName": "seed",
+      "normalizedLastName": "tester",
+      "normalizedEmail": "seed-tester@example.com"
+    }
+  ],
+  "locations": [
+    {
+      "position": 1,
+      "landmark": "Staging Landmark",
+      "normalizedLandmark": "staging landmark",
+      "locationUrl": "https://example.com/staging-landmark",
+      "clue": "Synthetic clue used only for load testing.",
+      "campusPopulation": "Test data"
+    }
+  ]
+}

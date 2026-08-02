@@ -51,8 +51,9 @@ Run these sequentially:
 2. `five` — 5 users
 3. `twentyFive` — 25 users
 4. `hundred` — 100 users
-5. `fiveHundred` — 500 users
-6. `thousand` — 1,000 users
+5. `oneFifty` — 150 users
+6. `fiveHundred` — 500 users
+7. `thousand` — 1,000 users
 
 Example:
 
