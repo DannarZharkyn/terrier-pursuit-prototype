@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { validateParticipantJoinRequest } from "@/lib/participant-join/validation";
 import type { ParticipantJoinResponse } from "@/lib/participant-join/types";
@@ -19,6 +20,8 @@ type ParticipantRow = {
   first_name: string;
   last_name: string;
   email: string;
+  normalized_first_name: string;
+  normalized_last_name: string;
 };
 
 type EventLocationRow = {
@@ -47,18 +50,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = createSupabaseAdminClient();
-  const { data: eventData, error: eventError } = await supabase
-    .from("events")
-    .select("id, name, game_code, status, starts_at, submission_deadline, rules")
-    .eq("status", "published")
-    .eq("game_code", validation.data.normalizedGameCode);
+  const eventResult = await getCachedPublishedEvent(
+    validation.data.normalizedGameCode,
+  );
 
-  if (eventError) {
-    return json({ ok: false, error: eventError.message }, 500);
+  if (eventResult.error) {
+    return json({ ok: false, error: eventResult.error }, 500);
   }
 
-  if (!eventData || eventData.length !== 1) {
+  if (!eventResult.event) {
     return json(
       {
         ok: false,
@@ -68,20 +68,30 @@ export async function POST(request: Request) {
     );
   }
 
-  const event = eventData[0] as EventRow;
+  const event = eventResult.event;
+  const supabase = createSupabaseAdminClient();
   const { data: participantData, error: participantError } = await supabase
     .from("participants")
-    .select("id, first_name, last_name, email")
+    .select(
+      "id, first_name, last_name, email, normalized_first_name, normalized_last_name",
+    )
     .eq("event_id", event.id)
-    .eq("normalized_first_name", validation.data.normalizedFirstName)
-    .eq("normalized_last_name", validation.data.normalizedLastName)
-    .eq("normalized_email", validation.data.normalizedEmail);
+    .eq("normalized_email", validation.data.normalizedEmail)
+    .maybeSingle();
 
   if (participantError) {
     return json({ ok: false, error: participantError.message }, 500);
   }
 
-  if ((!participantData || participantData.length !== 1) && !validation.data.selfRegister) {
+  const existingParticipant = participantData as ParticipantRow | null;
+  const namesMatch = Boolean(
+    existingParticipant &&
+      existingParticipant.normalized_first_name ===
+        validation.data.normalizedFirstName &&
+      existingParticipant.normalized_last_name === validation.data.normalizedLastName,
+  );
+
+  if ((!existingParticipant || !namesMatch) && !validation.data.selfRegister) {
     return json(
       {
         ok: false,
@@ -91,30 +101,20 @@ export async function POST(request: Request) {
     );
   }
 
-  let participant = participantData?.[0] as ParticipantRow | undefined;
+  if (existingParticipant && !namesMatch) {
+    return json(
+      {
+        ok: false,
+        error:
+          "That email is already registered for this event. Sign in using the registered first and last name, or contact the organizer for help.",
+      },
+      409,
+    );
+  }
+
+  let participant = existingParticipant ?? undefined;
 
   if (!participant) {
-    const { data: existingEmailData, error: existingEmailError } = await supabase
-      .from("participants")
-      .select("id")
-      .eq("event_id", event.id)
-      .eq("normalized_email", validation.data.normalizedEmail);
-
-    if (existingEmailError) {
-      return json({ ok: false, error: existingEmailError.message }, 500);
-    }
-
-    if (existingEmailData && existingEmailData.length > 0) {
-      return json(
-        {
-          ok: false,
-          error:
-            "That email is already registered for this event. Sign in using the registered first and last name, or contact the organizer for help.",
-        },
-        409,
-      );
-    }
-
     const { data: insertedParticipant, error: insertError } = await supabase
       .from("participants")
       .insert({
@@ -127,7 +127,9 @@ export async function POST(request: Request) {
         normalized_email: validation.data.normalizedEmail,
         joined_at: new Date().toISOString(),
       })
-      .select("id, first_name, last_name, email")
+      .select(
+        "id, first_name, last_name, email, normalized_first_name, normalized_last_name",
+      )
       .single();
 
     if (insertError || !insertedParticipant) {
@@ -142,14 +144,10 @@ export async function POST(request: Request) {
 
     participant = insertedParticipant as ParticipantRow;
   }
-  const { data: locationData, error: locationError } = await supabase
-    .from("event_locations")
-    .select("clue")
-    .eq("event_id", event.id)
-    .order("position", { ascending: true });
+  const locationResult = await getCachedEventClues(event.id);
 
-  if (locationError) {
-    return json({ ok: false, error: locationError.message }, 500);
+  if (locationResult.error) {
+    return json({ ok: false, error: locationResult.error }, 500);
   }
 
   return json({
@@ -167,12 +165,49 @@ export async function POST(request: Request) {
       startsAt: event.starts_at ?? "",
       submissionDeadline: event.submission_deadline ?? "",
       rules: event.rules ?? "",
-      clues: ((locationData ?? []) as unknown as EventLocationRow[])
+      clues: (locationResult.locations as EventLocationRow[])
         .map((location) => normalizeLegacyPunctuation(location.clue).trim())
         .filter(Boolean),
     },
   });
 }
+
+const getCachedPublishedEvent = unstable_cache(
+  async (gameCode: string) => {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("events")
+      .select("id, name, game_code, status, starts_at, submission_deadline, rules")
+      .eq("status", "published")
+      .eq("game_code", gameCode)
+      .maybeSingle();
+
+    return {
+      event: (data as EventRow | null) ?? null,
+      error: error?.message,
+    };
+  },
+  ["participant-published-event"],
+  { revalidate: 5 },
+);
+
+const getCachedEventClues = unstable_cache(
+  async (eventId: string) => {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("event_locations")
+      .select("clue")
+      .eq("event_id", eventId)
+      .order("position", { ascending: true });
+
+    return {
+      locations: (data ?? []) as EventLocationRow[],
+      error: error?.message,
+    };
+  },
+  ["participant-event-clues"],
+  { revalidate: 5 },
+);
 
 function json(response: ParticipantJoinResponse, status = 200) {
   return NextResponse.json(response, { status });

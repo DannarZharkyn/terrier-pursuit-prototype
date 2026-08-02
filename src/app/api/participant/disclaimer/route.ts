@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const uuidPattern =
@@ -14,18 +15,19 @@ export async function GET(request: Request) {
   }
 
   const supabase = createSupabaseAdminClient();
-  const context = await getContext(supabase, eventId, participantId);
+  const [context, consent] = await Promise.all([
+    getContext(supabase, eventId, participantId),
+    supabase
+      .from("participant_disclaimer_consents")
+      .select("activity_safety_accepted, media_data_accepted, accepted_at")
+      .eq("event_id", eventId)
+      .eq("participant_id", participantId)
+      .maybeSingle(),
+  ]);
 
   if (!context.ok) {
     return json({ ok: false, error: context.error }, context.status);
   }
-
-  const consent = await supabase
-    .from("participant_disclaimer_consents")
-    .select("activity_safety_accepted, media_data_accepted, accepted_at")
-    .eq("event_id", eventId)
-    .eq("participant_id", participantId)
-    .maybeSingle();
 
   if (consent.error) {
     return json({ ok: false, error: consent.error.message }, 500);
@@ -117,12 +119,15 @@ async function getContext(
   eventId: string,
   participantId: string,
 ) {
-  const participant = await supabase
-    .from("participants")
-    .select("id")
-    .eq("id", participantId)
-    .eq("event_id", eventId)
-    .maybeSingle();
+  const [participant, event] = await Promise.all([
+    supabase
+      .from("participants")
+      .select("id")
+      .eq("id", participantId)
+      .eq("event_id", eventId)
+      .maybeSingle(),
+    getCachedDisclaimerEvent(eventId),
+  ]);
 
   if (participant.error) {
     return { ok: false as const, error: participant.error.message, status: 500 };
@@ -136,26 +141,43 @@ async function getContext(
     };
   }
 
-  const event = await supabase
-    .from("events")
-    .select("name, disclaimer_text")
-    .eq("id", eventId)
-    .maybeSingle();
-
   if (event.error) {
-    return { ok: false as const, error: event.error.message, status: 500 };
+    return { ok: false as const, error: event.error, status: 500 };
   }
 
-  if (!event.data) {
+  if (!event.event) {
     return { ok: false as const, error: "Event not found.", status: 404 };
   }
 
   return {
     ok: true as const,
-    eventName: event.data.name as string,
-    disclaimer: event.data.disclaimer_text as string,
+    eventName: event.event.name,
+    disclaimer: event.event.disclaimer,
   };
 }
+
+const getCachedDisclaimerEvent = unstable_cache(
+  async (eventId: string) => {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("events")
+      .select("name, disclaimer_text")
+      .eq("id", eventId)
+      .maybeSingle();
+
+    return {
+      event: data
+        ? {
+            name: data.name as string,
+            disclaimer: data.disclaimer_text as string,
+          }
+        : null,
+      error: error?.message,
+    };
+  },
+  ["participant-disclaimer-event"],
+  { revalidate: 5 },
+);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
