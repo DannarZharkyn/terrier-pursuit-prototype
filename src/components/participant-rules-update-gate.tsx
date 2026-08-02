@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { participantRulesChangedEvent } from "@/lib/participant-realtime";
 import { readParticipantSession } from "@/lib/participant-session";
 
 type RulesReviewResponse = {
@@ -13,7 +14,7 @@ type RulesReviewResponse = {
   error?: string;
 };
 
-const refreshIntervalMs = 30_000;
+const fallbackRefreshIntervalMs = 5 * 60_000;
 
 export function ParticipantRulesUpdateGate({
   children,
@@ -52,8 +53,25 @@ export function ParticipantRulesUpdateGate({
 
   useEffect(() => {
     void checkForUpdate();
-    const interval = window.setInterval(() => void checkForUpdate(), refreshIntervalMs);
-    return () => window.clearInterval(interval);
+    const handleRealtimeUpdate = () => void checkForUpdate();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void checkForUpdate();
+      }
+    };
+    const interval = window.setInterval(
+      () => void checkForUpdate(),
+      fallbackRefreshIntervalMs,
+    );
+
+    window.addEventListener(participantRulesChangedEvent, handleRealtimeUpdate);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener(participantRulesChangedEvent, handleRealtimeUpdate);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [checkForUpdate]);
 
   async function confirmReview() {

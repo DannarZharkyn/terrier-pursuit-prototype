@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Info, UserPlus, Users, XCircle } from "lucide-react";
 import { ParticipantTeamCard } from "@/components/participant-team-card";
+import { useParticipantTeamChanges } from "@/hooks/use-participant-team-changes";
 import type {
   CurrentTeamResponse,
   ParticipantTeam,
@@ -21,6 +22,11 @@ export function TeamOptionsContent() {
   const [isLoadingTeam, setIsLoadingTeam] = useState(true);
   const [error, setError] = useState<string>();
   const [details, setDetails] = useState<string[]>();
+
+  useParticipantTeamChanges(() => {
+    const storedSession = readParticipantSession();
+    if (storedSession) void loadCurrentTeam(storedSession);
+  });
 
   useEffect(() => {
     const storedSession = readParticipantSession();

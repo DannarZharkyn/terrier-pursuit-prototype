@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, XCircle } from "lucide-react";
 import { ParticipantTeamCard } from "@/components/participant-team-card";
+import { useParticipantTeamChanges } from "@/hooks/use-participant-team-changes";
 import type {
   CurrentTeamResponse,
   JoinTeamResponse,
@@ -24,6 +25,11 @@ export function JoinTeamForm() {
   const [successMessage, setSuccessMessage] = useState<string>();
   const [error, setError] = useState<string>();
   const [details, setDetails] = useState<string[]>();
+
+  useParticipantTeamChanges(() => {
+    const storedSession = readParticipantSession();
+    if (storedSession) void loadCurrentTeam(storedSession);
+  });
 
   useEffect(() => {
     const storedSession = readParticipantSession();
@@ -56,9 +62,7 @@ export function JoinTeamForm() {
         return;
       }
 
-      if (result.team) {
-        setTeam(result.team);
-      }
+      setTeam(result.team ?? undefined);
     } catch {
       setError("Could not load your team. Please refresh and try again.");
     } finally {

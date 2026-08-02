@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { CheckCircle2, ImagePlus, Save, Send, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ParticipantShell } from "@/components/participant-shell";
+import { useParticipantTeamChanges } from "@/hooks/use-participant-team-changes";
 import { readParticipantSession } from "@/lib/participant-session";
 import type { CurrentTeamResponse, ParticipantTeam } from "@/lib/participant-teams/types";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -41,6 +42,8 @@ export function ParticipantUploadsContent() {
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
+
+  useParticipantTeamChanges(() => void loadFolder());
 
   useEffect(() => {
     void loadFolder();
