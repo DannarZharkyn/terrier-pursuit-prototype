@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
 export default function IndexPage() {
-  redirect("/organizer/login");
+  return null;
 }

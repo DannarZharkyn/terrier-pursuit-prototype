@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { markParticipantConsentVerified } from "@/lib/participant-consent-session";
 import { readParticipantSession } from "@/lib/participant-session";
 
 type DisclaimerResponse = {
@@ -45,6 +46,7 @@ export function ParticipantDisclaimerContent() {
           return;
         }
         if (result.accepted) {
+          markParticipantConsentVerified(session.event.id, session.participant.id);
           router.replace("/participant/team-options");
           return;
         }
@@ -84,6 +86,7 @@ export function ParticipantDisclaimerContent() {
         return;
       }
 
+      markParticipantConsentVerified(session.event.id, session.participant.id);
       router.replace("/participant/team-options");
     } catch {
       setError("Could not save your agreement. Please try again.");
