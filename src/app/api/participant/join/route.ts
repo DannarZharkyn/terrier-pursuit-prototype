@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const eventResult = await getCachedPublishedEvent(
+  const eventResult = await getPublishedEvent(
     validation.data.normalizedGameCode,
   );
 
@@ -172,24 +172,20 @@ export async function POST(request: Request) {
   });
 }
 
-const getCachedPublishedEvent = unstable_cache(
-  async (gameCode: string) => {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from("events")
-      .select("id, name, game_code, status, starts_at, submission_deadline, rules")
-      .eq("status", "published")
-      .eq("game_code", gameCode)
-      .maybeSingle();
+async function getPublishedEvent(gameCode: string) {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("events")
+    .select("id, name, game_code, status, starts_at, submission_deadline, rules")
+    .eq("status", "published")
+    .eq("game_code", gameCode)
+    .maybeSingle();
 
-    return {
-      event: (data as EventRow | null) ?? null,
-      error: error?.message,
-    };
-  },
-  ["participant-published-event"],
-  { revalidate: 5 },
-);
+  return {
+    event: (data as EventRow | null) ?? null,
+    error: error?.message,
+  };
+}
 
 const getCachedEventClues = unstable_cache(
   async (eventId: string) => {

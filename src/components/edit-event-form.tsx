@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AlertTriangle, Save, XCircle } from "lucide-react";
 import { TimePicker12 } from "@/components/time-picker-12";
 
@@ -19,7 +18,6 @@ type EditableEvent = {
 };
 
 export function EditEventForm({ event }: { event: EditableEvent }) {
-  const router = useRouter();
   const initialDate = new Date(event.startsAt);
   const initialSubmissionDeadline = new Date(event.submissionDeadline);
   const [name, setName] = useState(event.name);
@@ -80,8 +78,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
         return;
       }
 
-      router.push(`/organizer/event/${event.id}`);
-      router.refresh();
+      window.location.assign(`/organizer/event/${event.id}`);
     } catch {
       setError("Could not reach the update service. Please try again.");
     } finally {

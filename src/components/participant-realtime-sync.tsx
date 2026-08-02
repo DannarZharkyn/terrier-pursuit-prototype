@@ -6,7 +6,10 @@ import {
   notifyParticipantRulesChanged,
   notifyParticipantTeamChanged,
 } from "@/lib/participant-realtime";
-import { readParticipantSession } from "@/lib/participant-session";
+import {
+  readParticipantSession,
+  refreshParticipantSession,
+} from "@/lib/participant-session";
 
 type RealtimeSignal = {
   event_id?: string;
@@ -34,7 +37,7 @@ export function ParticipantRealtimeSync() {
           schema: "public",
           table: "participant_realtime_signals",
         },
-        (payload) => {
+        async (payload) => {
           const signal = payload.new as RealtimeSignal;
 
           if (signal.event_id !== session.event.id) {
@@ -44,6 +47,11 @@ export function ParticipantRealtimeSync() {
           setStatus(`received-${signal.kind ?? "unknown"}`);
 
           if (signal.kind === "rules_updated") {
+            try {
+              await refreshParticipantSession(session);
+            } catch {
+              // Keep the last known event details if a refresh temporarily fails.
+            }
             notifyParticipantRulesChanged();
             return;
           }

@@ -6,10 +6,10 @@ import { Flag, Timer } from "lucide-react";
 import { ParticipantShell } from "@/components/participant-shell";
 import {
   readParticipantSession,
-  saveParticipantSession,
+  refreshParticipantSession,
   type ParticipantSession,
 } from "@/lib/participant-session";
-import type { ParticipantJoinResponse } from "@/lib/participant-join/types";
+import { participantRulesChangedEvent } from "@/lib/participant-realtime";
 
 const second = 1000;
 
@@ -29,31 +29,24 @@ export function ParticipantHomeContent() {
     setSession(storedSession);
     void refreshEventDetails(storedSession);
 
+    const handleEventDetailsChanged = () => {
+      const refreshedSession = readParticipantSession();
+      if (refreshedSession) setSession(refreshedSession);
+    };
+    window.addEventListener(participantRulesChangedEvent, handleEventDetailsChanged);
+
     async function refreshEventDetails(currentSession: ParticipantSession) {
       try {
-        const response = await fetch("/api/participant/join", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-          body: JSON.stringify({
-            firstName: currentSession.participant.firstName,
-            lastName: currentSession.participant.lastName,
-            email: currentSession.participant.email,
-            gameCode: currentSession.event.gameCode,
-          }),
-        });
-        const result = (await response.json()) as ParticipantJoinResponse;
-
-        if (!result.ok) {
-          return;
-        }
-
-        saveParticipantSession(result);
-        setSession(readParticipantSession());
+        const refreshedSession = await refreshParticipantSession(currentSession);
+        if (refreshedSession) setSession(refreshedSession);
       } catch {
         // Keep the last known session available if a refresh temporarily fails.
       }
     }
+
+    return () => {
+      window.removeEventListener(participantRulesChangedEvent, handleEventDetailsChanged);
+    };
   }, [router]);
 
   useEffect(() => {

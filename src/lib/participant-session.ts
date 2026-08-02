@@ -49,3 +49,31 @@ export function readParticipantSession() {
 export function clearParticipantSession() {
   window.sessionStorage.removeItem(participantSessionKey);
 }
+
+export async function refreshParticipantSession(
+  currentSession: ParticipantSession = readParticipantSession() as ParticipantSession,
+) {
+  if (!currentSession) {
+    return undefined;
+  }
+
+  const response = await fetch("/api/participant/join", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+    body: JSON.stringify({
+      firstName: currentSession.participant.firstName,
+      lastName: currentSession.participant.lastName,
+      email: currentSession.participant.email,
+      gameCode: currentSession.event.gameCode,
+    }),
+  });
+  const result = (await response.json()) as ParticipantJoinSuccess | { ok: false };
+
+  if (!result.ok) {
+    return undefined;
+  }
+
+  saveParticipantSession(result);
+  return readParticipantSession();
+}

@@ -122,7 +122,7 @@ export async function PATCH(
   const supabase = createSupabaseAdminClient();
   const currentEvent = await supabase
     .from("events")
-    .select("disclaimer_text, disclaimer_locked_at")
+    .select("name, starts_at, submission_deadline, rules, disclaimer_text, disclaimer_locked_at")
     .eq("id", eventId)
     .maybeSingle();
 
@@ -169,6 +169,20 @@ export async function PATCH(
 
   if (!data) {
     return jsonUpdate({ ok: false, error: "Event was not found." }, 404);
+  }
+
+  const rulesChanged = rules !== currentEvent.data.rules;
+  const otherParticipantDetailsChanged =
+    name !== currentEvent.data.name ||
+    parsedStartsAt.toISOString() !== currentEvent.data.starts_at ||
+    parsedSubmissionDeadline.toISOString() !== currentEvent.data.submission_deadline;
+
+  if (!rulesChanged && otherParticipantDetailsChanged) {
+    await supabase.from("participant_realtime_signals").insert({
+      event_id: eventId,
+      participant_id: null,
+      kind: "rules_updated",
+    });
   }
 
   revalidatePath("/organizer/dashboard");
