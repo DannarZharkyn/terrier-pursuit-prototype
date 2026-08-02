@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const uuidPattern =
@@ -15,25 +14,13 @@ export async function GET(request: Request) {
   }
 
   const supabase = createSupabaseAdminClient();
-  const [context, review] = await Promise.all([
-    getContext(supabase, eventId, participantId),
-    supabase
-      .from("participant_rules_reviews")
-      .select("reviewed_version")
-      .eq("event_id", eventId)
-      .eq("participant_id", participantId)
-      .maybeSingle(),
-  ]);
+  const context = await getContext(supabase, eventId, participantId, true);
 
   if (!context.ok) {
     return json({ ok: false, error: context.error }, context.status);
   }
 
-  if (review.error) {
-    return json({ ok: false, error: review.error.message }, 500);
-  }
-
-  if (!review.data) {
+  if (!context.review) {
     const created = await supabase
       .from("participant_rules_reviews")
       .insert({
@@ -51,7 +38,7 @@ export async function GET(request: Request) {
 
   return json({
     ok: true,
-    updateRequired: review.data.reviewed_version < context.rulesVersion,
+    updateRequired: context.review.reviewed_version < context.rulesVersion,
     rules: context.rules,
     rulesVersion: context.rulesVersion,
     updatedAt: context.updatedAt,
@@ -129,16 +116,17 @@ async function getContext(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   eventId: string,
   participantId: string,
+  includeReview = false,
 ) {
-  const [participant, event] = await Promise.all([
-    supabase
-      .from("participants")
-      .select("id")
-      .eq("id", participantId)
-      .eq("event_id", eventId)
-      .maybeSingle(),
-    getCachedRulesEvent(eventId),
-  ]);
+  const selection = includeReview
+    ? "id, events!participants_event_id_fkey!inner(rules, rules_version, rules_updated_at), participant_rules_reviews(reviewed_version)"
+    : "id, events!participants_event_id_fkey!inner(rules, rules_version, rules_updated_at)";
+  const participant = await supabase
+    .from("participants")
+    .select(selection)
+    .eq("id", participantId)
+    .eq("event_id", eventId)
+    .maybeSingle();
 
   if (participant.error) {
     return { ok: false as const, error: participant.error.message, status: 500 };
@@ -152,45 +140,35 @@ async function getContext(
     };
   }
 
-  if (event.error) {
-    return { ok: false as const, error: event.error, status: 500 };
-  }
-
-  if (!event.event) {
+  const row = participant.data as unknown as Record<string, unknown>;
+  const event = firstRelated(row.events);
+  if (!event) {
     return { ok: false as const, error: "Event not found.", status: 404 };
   }
 
   return {
     ok: true as const,
-    rules: event.event.rules,
-    rulesVersion: event.event.rulesVersion,
-    updatedAt: event.event.updatedAt,
+    rules: (event.rules as string | null) ?? "",
+    rulesVersion: event.rules_version as number,
+    updatedAt: event.rules_updated_at as string,
+    review: includeReview
+      ? rulesReview(firstRelated(row.participant_rules_reviews))
+      : null,
   };
 }
 
-const getCachedRulesEvent = unstable_cache(
-  async (eventId: string) => {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from("events")
-      .select("rules, rules_version, rules_updated_at")
-      .eq("id", eventId)
-      .maybeSingle();
+function rulesReview(value: Record<string, unknown> | null) {
+  return value
+    ? { reviewed_version: value.reviewed_version as number }
+    : null;
+}
 
-    return {
-      event: data
-        ? {
-            rules: (data.rules as string | null) ?? "",
-            rulesVersion: data.rules_version as number,
-            updatedAt: data.rules_updated_at as string,
-          }
-        : null,
-      error: error?.message,
-    };
-  },
-  ["participant-rules-event"],
-  { revalidate: 5 },
-);
+function firstRelated(value: unknown): Record<string, unknown> | null {
+  if (Array.isArray(value)) {
+    return isRecord(value[0]) ? value[0] : null;
+  }
+  return isRecord(value) ? value : null;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

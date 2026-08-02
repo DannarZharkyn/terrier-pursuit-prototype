@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const uuidPattern =
@@ -15,25 +14,13 @@ export async function GET(request: Request) {
   }
 
   const supabase = createSupabaseAdminClient();
-  const [context, consent] = await Promise.all([
-    getContext(supabase, eventId, participantId),
-    supabase
-      .from("participant_disclaimer_consents")
-      .select("activity_safety_accepted, media_data_accepted, accepted_at")
-      .eq("event_id", eventId)
-      .eq("participant_id", participantId)
-      .maybeSingle(),
-  ]);
+  const context = await getContext(supabase, eventId, participantId, true);
 
   if (!context.ok) {
     return json({ ok: false, error: context.error }, context.status);
   }
 
-  if (consent.error) {
-    return json({ ok: false, error: consent.error.message }, 500);
-  }
-
-  if (!consent.data) {
+  if (!context.consent) {
     const created = await supabase
       .from("participant_disclaimer_consents")
       .insert({ event_id: eventId, participant_id: participantId })
@@ -48,9 +35,9 @@ export async function GET(request: Request) {
   return json({
     ok: true,
     accepted: Boolean(
-      consent.data?.activity_safety_accepted &&
-        consent.data?.media_data_accepted &&
-        consent.data?.accepted_at,
+      context.consent?.activity_safety_accepted &&
+        context.consent?.media_data_accepted &&
+        context.consent?.accepted_at,
     ),
     disclaimer: context.disclaimer,
     eventName: context.eventName,
@@ -118,16 +105,17 @@ async function getContext(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   eventId: string,
   participantId: string,
+  includeConsent = false,
 ) {
-  const [participant, event] = await Promise.all([
-    supabase
-      .from("participants")
-      .select("id")
-      .eq("id", participantId)
-      .eq("event_id", eventId)
-      .maybeSingle(),
-    getCachedDisclaimerEvent(eventId),
-  ]);
+  const selection = includeConsent
+    ? "id, events!participants_event_id_fkey!inner(name, disclaimer_text), participant_disclaimer_consents(activity_safety_accepted, media_data_accepted, accepted_at)"
+    : "id, events!participants_event_id_fkey!inner(name, disclaimer_text)";
+  const participant = await supabase
+    .from("participants")
+    .select(selection)
+    .eq("id", participantId)
+    .eq("event_id", eventId)
+    .maybeSingle();
 
   if (participant.error) {
     return { ok: false as const, error: participant.error.message, status: 500 };
@@ -141,43 +129,38 @@ async function getContext(
     };
   }
 
-  if (event.error) {
-    return { ok: false as const, error: event.error, status: 500 };
-  }
-
-  if (!event.event) {
+  const row = participant.data as unknown as Record<string, unknown>;
+  const event = firstRelated(row.events);
+  if (!event) {
     return { ok: false as const, error: "Event not found.", status: 404 };
   }
 
   return {
     ok: true as const,
-    eventName: event.event.name,
-    disclaimer: event.event.disclaimer,
+    eventName: event.name as string,
+    disclaimer: event.disclaimer_text as string,
+    consent: includeConsent
+      ? disclaimerConsent(firstRelated(row.participant_disclaimer_consents))
+      : null,
   };
 }
 
-const getCachedDisclaimerEvent = unstable_cache(
-  async (eventId: string) => {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from("events")
-      .select("name, disclaimer_text")
-      .eq("id", eventId)
-      .maybeSingle();
+function disclaimerConsent(value: Record<string, unknown> | null) {
+  return value
+    ? {
+        activity_safety_accepted: value.activity_safety_accepted as boolean,
+        media_data_accepted: value.media_data_accepted as boolean,
+        accepted_at: value.accepted_at as string | null,
+      }
+    : null;
+}
 
-    return {
-      event: data
-        ? {
-            name: data.name as string,
-            disclaimer: data.disclaimer_text as string,
-          }
-        : null,
-      error: error?.message,
-    };
-  },
-  ["participant-disclaimer-event"],
-  { revalidate: 5 },
-);
+function firstRelated(value: unknown): Record<string, unknown> | null {
+  if (Array.isArray(value)) {
+    return isRecord(value[0]) ? value[0] : null;
+  }
+  return isRecord(value) ? value : null;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
