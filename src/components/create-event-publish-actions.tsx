@@ -179,18 +179,21 @@ export function CreateEventPublishActions() {
           <a href="/organizer/dashboard" className="btn-primary">
             Return to Dashboard
           </a>
-        ) : null}
-        <Link href="/organizer/create-event" className="btn-secondary">
-          Back to Edit
-        </Link>
-        <button
-          className="btn-primary disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
-          type="button"
-          onClick={handlePublish}
-          disabled={isPublishing || Boolean(success)}
-        >
-          {isPublishing ? "Publishing..." : "Publish Event"}
-        </button>
+        ) : (
+          <>
+            <Link href="/organizer/create-event" className="btn-secondary">
+              Back to Edit
+            </Link>
+            <button
+              className="btn-primary disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+              type="button"
+              onClick={handlePublish}
+              disabled={isPublishing}
+            >
+              {isPublishing ? "Publishing..." : "Publish Event"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
