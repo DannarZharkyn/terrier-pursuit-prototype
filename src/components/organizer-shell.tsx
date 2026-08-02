@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 import { Logo } from "./logo";
 
@@ -24,14 +23,14 @@ export function OrganizerShell({
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <Link
+                <a
                   key={item.href}
                   href={item.href}
                   className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-gray-700 transition hover:bg-white hover:text-bu-red"
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
-                </Link>
+                </a>
               );
             })}
           </nav>
@@ -45,14 +44,14 @@ export function OrganizerShell({
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     return (
-                      <Link
+                      <a
                         key={item.href}
                         href={item.href}
                         className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-center text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-white hover:text-bu-red"
                       >
                         <Icon className="h-4 w-4 shrink-0" />
                         {item.label}
-                      </Link>
+                      </a>
                     );
                   })}
                 </nav>

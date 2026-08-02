@@ -175,6 +175,11 @@ export function CreateEventPublishActions() {
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+        {success ? (
+          <a href="/organizer/dashboard" className="btn-primary">
+            Return to Dashboard
+          </a>
+        ) : null}
         <Link href="/organizer/create-event" className="btn-secondary">
           Back to Edit
         </Link>
