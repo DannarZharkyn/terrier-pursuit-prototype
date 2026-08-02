@@ -29,6 +29,16 @@ const profiles = {
     { duration: "2m", target: 150 },
     { duration: "30s", target: 0 },
   ],
+  twoHundred: [
+    { duration: "3m", target: 200 },
+    { duration: "5m", target: 200 },
+    { duration: "1m", target: 0 },
+  ],
+  twoHundredDiagnostic: [
+    { duration: "2m", target: 200 },
+    { duration: "2m", target: 200 },
+    { duration: "30s", target: 0 },
+  ],
   fiveHundred: [
     { duration: "5m", target: 500 },
     { duration: "10m", target: 500 },
@@ -47,7 +57,7 @@ export function testConfig() {
 
   if (!stages) {
     throw new Error(
-      `Unknown PROFILE "${profileName}". Use smoke, five, twentyFive, hundred, oneFifty, oneFiftyDiagnostic, fiveHundred, or thousand.`,
+      `Unknown PROFILE "${profileName}". Use smoke, five, twentyFive, hundred, oneFifty, oneFiftyDiagnostic, twoHundred, twoHundredDiagnostic, fiveHundred, or thousand.`,
     );
   }
 
