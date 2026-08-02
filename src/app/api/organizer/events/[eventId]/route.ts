@@ -134,10 +134,10 @@ export async function PATCH(
     return jsonUpdate({ ok: false, error: "Event was not found." }, 404);
   }
 
-  if (
-    currentEvent.data.disclaimer_locked_at &&
-    disclaimer !== currentEvent.data.disclaimer_text
-  ) {
+  const currentDisclaimer = stringValue(currentEvent.data.disclaimer_text);
+  const disclaimerLocked = Boolean(currentEvent.data.disclaimer_locked_at);
+
+  if (disclaimerLocked && disclaimer !== currentDisclaimer.trim()) {
     return jsonUpdate(
       {
         ok: false,
@@ -148,6 +148,8 @@ export async function PATCH(
     );
   }
 
+  const disclaimerToSave = disclaimerLocked ? currentDisclaimer : disclaimer;
+
   const { data, error } = await supabase
     .from("events")
     .update({
@@ -155,7 +157,7 @@ export async function PATCH(
       starts_at: parsedStartsAt.toISOString(),
       submission_deadline: parsedSubmissionDeadline.toISOString(),
       rules,
-      disclaimer_text: disclaimer,
+      disclaimer_text: disclaimerToSave,
       email_subject: emailSubject,
       email_body: emailBody,
     })
