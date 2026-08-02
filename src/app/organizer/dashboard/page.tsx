@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { unstable_cache } from "next/cache";
 import { CalendarPlus } from "lucide-react";
 import { OrganizerEventList } from "@/components/organizer-event-list";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function OrganizerDashboardPage() {
-  const events = await getCachedOrganizerEvents();
+  const events = await getOrganizerEvents();
 
   return (
     <OrganizerShell
@@ -34,12 +34,6 @@ export default async function OrganizerDashboardPage() {
     </OrganizerShell>
   );
 }
-
-const getCachedOrganizerEvents = unstable_cache(
-  getOrganizerEvents,
-  ["organizer-dashboard-events"],
-  { revalidate: 5 },
-);
 
 async function getOrganizerEvents() {
   const supabase = createSupabaseAdminClient();
