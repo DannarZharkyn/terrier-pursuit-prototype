@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle, CheckCircle2, Mail, Pencil, Save, ScrollText, ShieldCheck, Users, X, XCircle } from "lucide-react";
+import { createEventInvitationEmail } from "@/lib/email/event-invitation";
 import type { PlatformTemplates } from "@/lib/templates/defaults";
 
 type TemplateSection = "rules" | "disclaimer" | "invitationEmail" | "participantInstructions";
@@ -13,6 +14,7 @@ export function PlatformTemplatesEditor({ initialTemplates }: { initialTemplates
   const [saving, setSaving] = useState<TemplateSection>();
   const [success, setSuccess] = useState<string>();
   const [error, setError] = useState<string>();
+  const emailPreview = createEmailPreview(templates);
 
   function startEditing(section: TemplateSection) {
     setDrafts(templates);
@@ -137,18 +139,21 @@ export function PlatformTemplatesEditor({ initialTemplates }: { initialTemplates
         onCancel={cancelEditing}
         onSave={() => saveSection("invitationEmail")}
       >
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs font-semibold leading-5 text-blue-900">
-          Available variables: {"{{eventName}}"}, {"{{startsAt}}"}, {"{{submissionDeadline}}"}, {"{{gameCode}}"}, {"{{participantUrl}}"}, {"{{participantInstructions}}"}, and {"{{rules}}"}.
-        </div>
         {editing === "invitationEmail" ? (
           <div className="space-y-4">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs font-semibold leading-5 text-blue-900">
+              Keep these variables wherever the event information should appear: {"{{eventName}}"}, {"{{startsAt}}"}, {"{{submissionDeadline}}"}, {"{{gameCode}}"}, {"{{participantUrl}}"}, {"{{participantInstructions}}"}, and {"{{rules}}"}. They are replaced automatically in the finished email.
+            </div>
             <label className="block"><span className="label">Email Subject</span><input className="field mt-2" value={drafts.emailSubject} onChange={(event) => setDrafts({ ...drafts, emailSubject: event.target.value })} /></label>
             <label className="block"><span className="label">Email Message</span><textarea className="field mt-2 min-h-[30rem] resize-y" value={drafts.emailBody} onChange={(event) => setDrafts({ ...drafts, emailBody: event.target.value })} /></label>
           </div>
         ) : (
           <div className="space-y-4">
-            <div><p className="text-xs font-bold uppercase tracking-wider text-gray-500">Subject</p><p className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-800">{templates.emailSubject}</p></div>
-            <div><p className="text-xs font-bold uppercase tracking-wider text-gray-500">Message</p><TemplateText value={templates.emailBody} /></div>
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-semibold leading-5 text-green-900">
+              Example preview — event details and the participant link will be filled in automatically for each new game.
+            </div>
+            <div><p className="text-xs font-bold uppercase tracking-wider text-gray-500">Subject</p><p className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-800">{emailPreview.subject}</p></div>
+            <div><p className="text-xs font-bold uppercase tracking-wider text-gray-500">Message</p><TemplateText value={emailPreview.body} /></div>
           </div>
         )}
       </TemplateCard>
@@ -193,4 +198,17 @@ function sectionLabel(section: TemplateSection) {
   if (section === "disclaimer") return "Participant disclaimer template";
   if (section === "participantInstructions") return "Participant instructions template";
   return "Invitation email template";
+}
+
+function createEmailPreview(templates: PlatformTemplates) {
+  return createEventInvitationEmail({
+    eventName: "Example Terrier Pursuit Game",
+    gameCode: "ABC234",
+    startsAt: "2026-09-15T14:00:00.000Z",
+    submissionDeadline: "2026-09-15T18:00:00.000Z",
+    rules: "The game rules saved for this event will appear here.",
+    participantUrl:
+      "https://terrier-pursuit-prototype.vercel.app/participant/welcome?gameCode=ABC234",
+    templates,
+  });
 }
