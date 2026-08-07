@@ -5,8 +5,10 @@ import { CalendarCheck, CalendarClock, ChevronDown, Clock, ClipboardCheck, Lock,
 import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { EventEmailTemplate } from "@/components/event-email-template";
+import { EventQrCode } from "@/components/event-qr-code";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createEventInvitationEmail } from "@/lib/email/event-invitation";
+import { createEventParticipantUrl } from "@/lib/events/participant-url";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -145,6 +147,11 @@ export default async function EventDashboardPage({
           </div>
         </div>
       </section>
+      <EventQrCode
+        eventName={dashboard.name}
+        gameCode={dashboard.gameCode}
+        participantUrl={dashboard.participantUrl}
+      />
       <section className="mb-6">
         <details className="group card overflow-hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bu-red [&::-webkit-details-marker]:hidden">
@@ -298,16 +305,18 @@ async function getEventDashboard(eventId: string) {
   }
 
   const participantRows = (participants ?? []) as unknown as ParticipantRow[];
+  const participantUrl = createEventParticipantUrl(
+    process.env.NEXT_PUBLIC_APP_URL || "https://terrier-pursuit-prototype.vercel.app",
+    (event.game_code as string | null) ?? "",
+    event.id as string,
+  );
   const generatedEmail = createEventInvitationEmail({
     eventName: event.name as string,
     gameCode: (event.game_code as string | null) ?? "",
     startsAt: event.starts_at as string,
     submissionDeadline: event.submission_deadline as string,
     rules: (event.rules as string | null) ?? "",
-    participantUrl: new URL(
-      "/participant/welcome",
-      process.env.NEXT_PUBLIC_APP_URL || "https://terrier-pursuit-prototype.vercel.app",
-    ).toString(),
+    participantUrl,
   });
   const participantIds = new Set(
     participantRows.map((participant) => participant.id),
@@ -367,6 +376,7 @@ async function getEventDashboard(eventId: string) {
   return {
     name: event.name as string,
     gameCode: (event.game_code as string | null) ?? "Not published",
+    participantUrl,
     startTime: event.starts_at
       ? formatEventDateTime(event.starts_at as string)
       : "Not scheduled",

@@ -6,12 +6,16 @@ import { ArrowRight, XCircle } from "lucide-react";
 import type { ParticipantJoinResponse } from "@/lib/participant-join/types";
 import { saveParticipantSession } from "@/lib/participant-session";
 
-export function ParticipantJoinForm() {
+type ParticipantJoinFormProps = {
+  initialGameCode?: string;
+};
+
+export function ParticipantJoinForm({ initialGameCode = "" }: ParticipantJoinFormProps) {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [gameCode, setGameCode] = useState("");
+  const [gameCode, setGameCode] = useState(initialGameCode);
   const [selfRegister, setSelfRegister] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string>();

@@ -25,7 +25,7 @@ export function createEventInvitationEmail(invitation: EventInvitation) {
     "",
     "Instructions:",
     "1. Open the sign-in link.",
-    "2. Enter your first name, last name, email address, and the game code above.",
+    "2. Enter your first name, last name, and email address. The event link will fill in the game code automatically.",
     "3. Create a team, join an existing team, or wait for the organizer to assign you.",
     "4. Destination clues will become visible when the game starts.",
     "",

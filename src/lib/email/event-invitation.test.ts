@@ -9,12 +9,12 @@ test("createEventInvitationEmail includes all participant instructions", () => {
     startsAt: "2026-07-30T14:00:00.000Z",
     submissionDeadline: "2026-07-30T18:00:00.000Z",
     rules: "Stay together.",
-    participantUrl: "https://example.com/participant/welcome",
+    participantUrl: "https://example.com/participant/welcome?gameCode=ABC234",
   });
 
   assert.match(email.subject, /Test & Play/);
   assert.match(email.body, /Dear Participant/);
   assert.match(email.body, /ABC234/);
   assert.match(email.body, /Stay together/);
-  assert.match(email.body, /https:\/\/example.com\/participant\/welcome/);
+  assert.match(email.body, /gameCode=ABC234/);
 });

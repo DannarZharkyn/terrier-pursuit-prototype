@@ -5,6 +5,7 @@ import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createEventInvitationEmail } from "@/lib/email/event-invitation";
+import { createEventParticipantUrl } from "@/lib/events/participant-url";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -32,10 +33,11 @@ export default async function EditEventPage({
     startsAt: event.starts_at as string,
     submissionDeadline: event.submission_deadline as string,
     rules: (event.rules as string | null) ?? "",
-    participantUrl: new URL(
-      "/participant/welcome",
+    participantUrl: createEventParticipantUrl(
       process.env.NEXT_PUBLIC_APP_URL || "https://terrier-pursuit-prototype.vercel.app",
-    ).toString(),
+      (event.game_code as string | null) ?? "",
+      event.id as string,
+    ),
   });
 
   return (

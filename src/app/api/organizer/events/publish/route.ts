@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { validatePublishEventRequest } from "@/lib/publish-event/validation";
 import type { PublishEventResponse } from "@/lib/publish-event/types";
 import { createEventInvitationEmail } from "@/lib/email/event-invitation";
+import { createEventParticipantUrl } from "@/lib/events/participant-url";
 
 const gameCodeCharacters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const maxGameCodeAttempts = 5;
@@ -33,14 +34,11 @@ export async function POST(request: Request) {
   let eventId: string | undefined;
 
   try {
-    const participantUrl = new URL(
-      "/participant/welcome",
-      process.env.NEXT_PUBLIC_APP_URL || request.url,
-    ).toString();
+    const participantBaseUrl = process.env.NEXT_PUBLIC_APP_URL || request.url;
     const eventResult = await insertEventWithUniqueGameCode(
       supabase,
       validation.data.event,
-      participantUrl,
+      participantBaseUrl,
     );
     eventId = eventResult.eventId;
 
@@ -118,10 +116,11 @@ async function insertEventWithUniqueGameCode(
     rules: string;
     disclaimer: string;
   },
-  participantUrl: string,
+  participantBaseUrl: string,
 ) {
   for (let attempt = 1; attempt <= maxGameCodeAttempts; attempt += 1) {
     const gameCode = generateGameCode();
+    const participantUrl = createEventParticipantUrl(participantBaseUrl, gameCode);
     const emailTemplate = createEventInvitationEmail({
       eventName: event.name,
       gameCode,
