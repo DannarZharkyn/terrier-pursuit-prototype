@@ -11,6 +11,11 @@ export type CreateEventDraft = {
   };
   participants: ParsedParticipant[];
   locations: ParsedEventLocation[];
+  templates: {
+    emailSubject: string;
+    emailBody: string;
+    participantInstructions: string;
+  };
   savedAt: string;
 };
 

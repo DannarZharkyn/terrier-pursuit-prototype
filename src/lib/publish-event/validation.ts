@@ -1,4 +1,5 @@
 import type { PublishEventRequest } from "./types";
+import { builtInPlatformTemplates } from "@/lib/templates/defaults";
 
 export function validatePublishEventRequest(body: unknown): {
   data?: PublishEventRequest;
@@ -13,6 +14,7 @@ export function validatePublishEventRequest(body: unknown): {
   const event = isRecord(body.event) ? body.event : undefined;
   const participants = Array.isArray(body.participants) ? body.participants : undefined;
   const locations = Array.isArray(body.locations) ? body.locations : undefined;
+  const templates = isRecord(body.templates) ? body.templates : undefined;
 
   if (!event) {
     errors.push("Event details are required.");
@@ -41,6 +43,25 @@ export function validatePublishEventRequest(body: unknown): {
     rules: stringValue(event.rules).trim(),
     disclaimer: stringValue(event.disclaimer).trim(),
   };
+  const normalizedTemplates = {
+    emailSubject: stringValue(templates?.emailSubject).trim() || builtInPlatformTemplates.emailSubject,
+    emailBody: stringValue(templates?.emailBody).trim() || builtInPlatformTemplates.emailBody,
+    participantInstructions:
+      stringValue(templates?.participantInstructions).trim() ||
+      builtInPlatformTemplates.participantInstructions,
+  };
+
+  if (normalizedTemplates.emailSubject.length > 200) {
+    errors.push("Default invitation email subject must be 200 characters or fewer.");
+  }
+
+  if (normalizedTemplates.emailBody.length > 50_000) {
+    errors.push("Default invitation email message must be 50,000 characters or fewer.");
+  }
+
+  if (normalizedTemplates.participantInstructions.length > 20_000) {
+    errors.push("Default participant instructions must be 20,000 characters or fewer.");
+  }
 
   if (!normalizedEvent.name) {
     errors.push("Event name is required.");
@@ -162,6 +183,7 @@ export function validatePublishEventRequest(body: unknown): {
       event: normalizedEvent,
       participants: normalizedParticipants,
       locations: normalizedLocations,
+      templates: normalizedTemplates,
     },
     errors: [],
   };

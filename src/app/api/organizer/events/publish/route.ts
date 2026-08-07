@@ -40,6 +40,7 @@ export async function POST(request: Request) {
       supabase,
       validation.data.event,
       participantBaseUrl,
+      validation.data.templates,
     );
     eventId = eventResult.eventId;
 
@@ -118,6 +119,11 @@ async function insertEventWithUniqueGameCode(
     disclaimer: string;
   },
   participantBaseUrl: string,
+  templates: {
+    emailSubject: string;
+    emailBody: string;
+    participantInstructions: string;
+  },
 ) {
   for (let attempt = 1; attempt <= maxGameCodeAttempts; attempt += 1) {
     const eventId = randomUUID();
@@ -134,6 +140,7 @@ async function insertEventWithUniqueGameCode(
       submissionDeadline: event.submissionDeadline,
       rules: event.rules,
       participantUrl,
+      templates,
     });
     const { data, error } = await supabase
       .from("events")

@@ -43,6 +43,7 @@ export function CreateEventPublishActions() {
           event: draft.event,
           participants: draft.participants,
           locations: draft.locations,
+          templates: draft.templates,
         }),
       });
       const result = (await response.json()) as PublishEventResponse;

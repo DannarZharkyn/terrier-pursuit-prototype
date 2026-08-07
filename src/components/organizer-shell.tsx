@@ -1,8 +1,9 @@
-import { LayoutDashboard } from "lucide-react";
+import { FileText, LayoutDashboard } from "lucide-react";
 import { Logo } from "./logo";
 
 const navItems = [
   { href: "/organizer/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/organizer/templates", label: "Templates", icon: FileText },
 ];
 
 export function OrganizerShell({

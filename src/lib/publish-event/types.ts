@@ -22,6 +22,11 @@ export type PublishEventRequest = {
     clue: string;
     campusPopulation: string;
   }[];
+  templates: {
+    emailSubject: string;
+    emailBody: string;
+    participantInstructions: string;
+  };
 };
 
 export type PublishEventSuccess = {

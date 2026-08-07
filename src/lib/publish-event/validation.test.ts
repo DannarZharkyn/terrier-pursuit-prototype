@@ -65,3 +65,23 @@ test("validatePublishEventRequest stores event dates as ISO strings", () => {
     "I understand and accept the participant disclaimer.",
   );
 });
+
+test("validatePublishEventRequest preserves the default-template snapshot", () => {
+  const result = validatePublishEventRequest({
+    event: validEvent,
+    participants: [validParticipant],
+    locations: [validLocation],
+    templates: {
+      emailSubject: "Custom {{eventName}}",
+      emailBody: "Use {{participantUrl}}",
+      participantInstructions: "Custom instructions",
+    },
+  });
+
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.data?.templates, {
+    emailSubject: "Custom {{eventName}}",
+    emailBody: "Use {{participantUrl}}",
+    participantInstructions: "Custom instructions",
+  });
+});

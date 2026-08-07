@@ -9,18 +9,17 @@ import { TimePicker12 } from "@/components/time-picker-12";
 import { saveCreateEventDraft } from "@/lib/imports/create-event-draft";
 import type { EventLocationImportResult } from "@/lib/imports/event-locations";
 import type { ParticipantImportResult } from "@/lib/imports/participants";
-import { defaultEventDisclaimer } from "@/lib/disclaimer/default";
-import { defaultEventRules } from "@/lib/rules/default";
+import type { PlatformTemplates } from "@/lib/templates/defaults";
 
-export function CreateEventForm() {
+export function CreateEventForm({ initialTemplates }: { initialTemplates: PlatformTemplates }) {
   const router = useRouter();
   const [eventName, setEventName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [submissionDate, setSubmissionDate] = useState("");
   const [submissionTime, setSubmissionTime] = useState("");
-  const [rules, setRules] = useState(defaultEventRules);
-  const [disclaimer, setDisclaimer] = useState(defaultEventDisclaimer);
+  const [rules, setRules] = useState(initialTemplates.rules);
+  const [disclaimer, setDisclaimer] = useState(initialTemplates.disclaimer);
   const [participantResult, setParticipantResult] = useState<ParticipantImportResult>();
   const [locationResult, setLocationResult] = useState<EventLocationImportResult>();
   const startsAt = toLocalIsoDateTime(startDate, startTime);
@@ -49,6 +48,11 @@ export function CreateEventForm() {
       },
       participants: participantResult.participants,
       locations: locationResult.locations,
+      templates: {
+        emailSubject: initialTemplates.emailSubject,
+        emailBody: initialTemplates.emailBody,
+        participantInstructions: initialTemplates.participantInstructions,
+      },
       savedAt: new Date().toISOString(),
     });
     router.push("/organizer/create-event/review");

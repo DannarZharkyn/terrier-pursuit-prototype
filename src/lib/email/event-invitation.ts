@@ -1,3 +1,8 @@
+import {
+  builtInPlatformTemplates,
+  type PlatformTemplates,
+} from "@/lib/templates/defaults";
+
 type EventInvitation = {
   eventName: string;
   gameCode: string;
@@ -5,38 +10,35 @@ type EventInvitation = {
   submissionDeadline: string;
   rules: string;
   participantUrl: string;
+  templates?: Pick<
+    PlatformTemplates,
+    "emailSubject" | "emailBody" | "participantInstructions"
+  >;
 };
 
 export function createEventInvitationEmail(invitation: EventInvitation) {
   const startsAt = formatUsDateTime(invitation.startsAt);
   const submissionDeadline = formatUsDateTime(invitation.submissionDeadline);
-  const subject = `You're invited to play ${invitation.eventName}`;
-  const body = [
-    "Dear Participant,",
-    "",
-    "Welcome to the Terrier Pursuit game!",
-    "",
-    `Game: ${invitation.eventName}`,
-    `Game starts: ${startsAt}`,
-    `Submission deadline: ${submissionDeadline}`,
-    `Game code: ${invitation.gameCode}`,
-    "",
-    `Sign in here: ${invitation.participantUrl}`,
-    "",
-    "Instructions:",
-    "1. Open the sign-in link.",
-    "2. Enter your first name, last name, and email address. The event link will fill in the game code automatically.",
-    "3. Create a team, join an existing team, or wait for the organizer to assign you.",
-    "4. Destination clues will become visible when the game starts.",
-    "",
-    "Game rules:",
-    invitation.rules,
-    "",
-    "Good luck and have fun!",
-    "Terrier Pursuit",
-  ].join("\n");
+  const templates = invitation.templates ?? builtInPlatformTemplates;
+  const values = {
+    eventName: invitation.eventName,
+    gameCode: invitation.gameCode,
+    startsAt,
+    submissionDeadline,
+    participantUrl: invitation.participantUrl,
+    rules: invitation.rules,
+    participantInstructions: templates.participantInstructions,
+  };
+  const subject = renderTemplate(templates.emailSubject, values);
+  const body = renderTemplate(templates.emailBody, values);
 
   return { subject, body };
+}
+
+function renderTemplate(template: string, values: Record<string, string>) {
+  return template.replace(/\{\{([a-zA-Z]+)\}\}/g, (placeholder, key: string) => {
+    return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : placeholder;
+  });
 }
 
 export function replaceEventInvitationUrl(body: string, participantUrl: string) {

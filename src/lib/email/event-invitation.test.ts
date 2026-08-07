@@ -30,3 +30,25 @@ test("replaceEventInvitationUrl keeps saved email text and updates its event lin
     "Welcome!\n\nSign in here: https://example.com/participant/welcome?gameCode=ABC234&event=event-id\n\nGood luck!",
   );
 });
+
+test("createEventInvitationEmail renders saved default-template variables", () => {
+  const email = createEventInvitationEmail({
+    eventName: "Night Hunt",
+    gameCode: "NIGHT2",
+    startsAt: "2026-07-30T14:00:00.000Z",
+    submissionDeadline: "2026-07-30T18:00:00.000Z",
+    rules: "Stay together.",
+    participantUrl: "https://example.com/join",
+    templates: {
+      emailSubject: "Join {{eventName}}",
+      emailBody: "Code: {{gameCode}}\n{{participantInstructions}}\n{{rules}}\n{{participantUrl}}",
+      participantInstructions: "Use the saved instructions.",
+    },
+  });
+
+  assert.equal(email.subject, "Join Night Hunt");
+  assert.match(email.body, /Code: NIGHT2/);
+  assert.match(email.body, /Use the saved instructions/);
+  assert.match(email.body, /Stay together/);
+  assert.match(email.body, /https:\/\/example.com\/join/);
+});
