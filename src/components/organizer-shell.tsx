@@ -1,5 +1,6 @@
 import { FileText, LayoutDashboard } from "lucide-react";
 import { Logo } from "./logo";
+import { OrganizerSignOutButton } from "./organizer-sign-out-button";
 
 const navItems = [
   { href: "/organizer/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -35,6 +36,9 @@ export function OrganizerShell({
               );
             })}
           </nav>
+          <div className="mt-8 border-t border-gray-200 pt-5">
+            <OrganizerSignOutButton />
+          </div>
         </aside>
         <main className="flex-1 px-5 py-6 sm:px-8 lg:px-10">
           <header className="mb-8 border-b border-gray-200 pb-6">
@@ -56,6 +60,7 @@ export function OrganizerShell({
                     );
                   })}
                 </nav>
+                <div className="mt-3"><OrganizerSignOutButton /></div>
               </div>
               <h1 className="text-2xl font-black text-gray-950 sm:text-3xl">
                 {title}
