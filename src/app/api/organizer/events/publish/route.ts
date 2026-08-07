@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { validatePublishEventRequest } from "@/lib/publish-event/validation";
@@ -119,8 +120,13 @@ async function insertEventWithUniqueGameCode(
   participantBaseUrl: string,
 ) {
   for (let attempt = 1; attempt <= maxGameCodeAttempts; attempt += 1) {
+    const eventId = randomUUID();
     const gameCode = generateGameCode();
-    const participantUrl = createEventParticipantUrl(participantBaseUrl, gameCode);
+    const participantUrl = createEventParticipantUrl(
+      participantBaseUrl,
+      gameCode,
+      eventId,
+    );
     const emailTemplate = createEventInvitationEmail({
       eventName: event.name,
       gameCode,
@@ -132,6 +138,7 @@ async function insertEventWithUniqueGameCode(
     const { data, error } = await supabase
       .from("events")
       .insert({
+        id: eventId,
         name: event.name,
         game_code: gameCode,
         status: "published",
@@ -148,7 +155,7 @@ async function insertEventWithUniqueGameCode(
 
     if (!error && data) {
       return {
-        eventId: data.id as string,
+        eventId,
         gameCode,
         emailTemplate,
       };

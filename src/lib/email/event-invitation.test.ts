@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createEventInvitationEmail } from "./event-invitation";
+import { createEventInvitationEmail, replaceEventInvitationUrl } from "./event-invitation";
 
 test("createEventInvitationEmail includes all participant instructions", () => {
   const email = createEventInvitationEmail({
@@ -17,4 +17,16 @@ test("createEventInvitationEmail includes all participant instructions", () => {
   assert.match(email.body, /ABC234/);
   assert.match(email.body, /Stay together/);
   assert.match(email.body, /gameCode=ABC234/);
+});
+
+test("replaceEventInvitationUrl keeps saved email text and updates its event link", () => {
+  const body = "Welcome!\n\nSign in here: https://old.example/link\n\nGood luck!";
+
+  assert.equal(
+    replaceEventInvitationUrl(
+      body,
+      "https://example.com/participant/welcome?gameCode=ABC234&event=event-id",
+    ),
+    "Welcome!\n\nSign in here: https://example.com/participant/welcome?gameCode=ABC234&event=event-id\n\nGood luck!",
+  );
 });

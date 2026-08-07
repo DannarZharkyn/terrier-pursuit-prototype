@@ -4,7 +4,7 @@ import { EditEventForm } from "@/components/edit-event-form";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createEventInvitationEmail } from "@/lib/email/event-invitation";
+import { createEventInvitationEmail, replaceEventInvitationUrl } from "@/lib/email/event-invitation";
 import { createEventParticipantUrl } from "@/lib/events/participant-url";
 
 export const dynamic = "force-dynamic";
@@ -27,17 +27,18 @@ export default async function EditEventPage({
     notFound();
   }
 
+  const participantUrl = createEventParticipantUrl(
+    process.env.NEXT_PUBLIC_APP_URL || "https://terrier-pursuit-prototype.vercel.app",
+    (event.game_code as string | null) ?? "",
+    event.id as string,
+  );
   const generatedEmail = createEventInvitationEmail({
     eventName: event.name as string,
     gameCode: (event.game_code as string | null) ?? "",
     startsAt: event.starts_at as string,
     submissionDeadline: event.submission_deadline as string,
     rules: (event.rules as string | null) ?? "",
-    participantUrl: createEventParticipantUrl(
-      process.env.NEXT_PUBLIC_APP_URL || "https://terrier-pursuit-prototype.vercel.app",
-      (event.game_code as string | null) ?? "",
-      event.id as string,
-    ),
+    participantUrl,
   });
 
   return (
@@ -61,7 +62,10 @@ export default async function EditEventPage({
           disclaimer: (event.disclaimer_text as string | null) ?? "",
           disclaimerLocked: Boolean(event.disclaimer_locked_at),
           emailSubject: (event.email_subject as string | null) ?? generatedEmail.subject,
-          emailBody: (event.email_body as string | null) ?? generatedEmail.body,
+          emailBody: replaceEventInvitationUrl(
+            (event.email_body as string | null) ?? generatedEmail.body,
+            participantUrl,
+          ),
         }}
       />
     </OrganizerShell>

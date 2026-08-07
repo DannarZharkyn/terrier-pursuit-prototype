@@ -39,6 +39,10 @@ export function createEventInvitationEmail(invitation: EventInvitation) {
   return { subject, body };
 }
 
+export function replaceEventInvitationUrl(body: string, participantUrl: string) {
+  return body.replace(/^Sign in here:.*$/m, `Sign in here: ${participantUrl}`);
+}
+
 function formatUsDateTime(value: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "long",

@@ -7,7 +7,7 @@ import { PageBackLink } from "@/components/page-back-link";
 import { EventEmailTemplate } from "@/components/event-email-template";
 import { EventQrCode } from "@/components/event-qr-code";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createEventInvitationEmail } from "@/lib/email/event-invitation";
+import { createEventInvitationEmail, replaceEventInvitationUrl } from "@/lib/email/event-invitation";
 import { createEventParticipantUrl } from "@/lib/events/participant-url";
 
 export const dynamic = "force-dynamic";
@@ -388,7 +388,10 @@ async function getEventDashboard(eventId: string) {
     disclaimerLocked: Boolean(event.disclaimer_locked_at),
     emailRecipients: participantRows.map((participant) => participant.email).join(", "),
     emailSubject: (event.email_subject as string | null) ?? generatedEmail.subject,
-    emailBody: (event.email_body as string | null) ?? generatedEmail.body,
+    emailBody: replaceEventInvitationUrl(
+      (event.email_body as string | null) ?? generatedEmail.body,
+      participantUrl,
+    ),
     locations: ((locations ?? []) as unknown as EventLocationRow[]).map((location) => ({
       id: location.id,
       landmark: location.landmark,
