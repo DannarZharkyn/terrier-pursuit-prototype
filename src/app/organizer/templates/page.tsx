@@ -2,6 +2,7 @@ import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { PlatformTemplatesEditor } from "@/components/platform-templates-editor";
 import { getPlatformTemplates } from "@/lib/templates/server";
+import { getApplicationBaseUrl } from "@/lib/app-url";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -20,7 +21,10 @@ export default async function OrganizerTemplatesPage() {
         <h2 className="mt-2 text-xl font-black">Templates for future games</h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-red-50">When a new game is started, the current templates are copied into that game. The organizer may then customize that game independently.</p>
       </div>
-      <PlatformTemplatesEditor initialTemplates={templates} />
+      <PlatformTemplatesEditor
+        initialTemplates={templates}
+        applicationBaseUrl={getApplicationBaseUrl()}
+      />
     </OrganizerShell>
   );
 }

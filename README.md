@@ -2,7 +2,9 @@
 
 Terrier Pursuit is a frontend-only MVP prototype for a campus scavenger hunt web application. The prototype is designed to visualize the core product flow for both event organizers and student participants.
 
-Live demo: https://terrier-pursuit-prototype.vercel.app/organizer/dashboard
+Live application: https://terrier-pursuit.vercel.app/organizer/dashboard
+
+Development prototype: https://terrier-pursuit-prototype.vercel.app/organizer/dashboard
 
 ## Overview
 

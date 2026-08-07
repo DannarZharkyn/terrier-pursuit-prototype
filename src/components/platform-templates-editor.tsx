@@ -7,14 +7,20 @@ import type { PlatformTemplates } from "@/lib/templates/defaults";
 
 type TemplateSection = "rules" | "disclaimer" | "invitationEmail" | "participantInstructions";
 
-export function PlatformTemplatesEditor({ initialTemplates }: { initialTemplates: PlatformTemplates }) {
+export function PlatformTemplatesEditor({
+  initialTemplates,
+  applicationBaseUrl,
+}: {
+  initialTemplates: PlatformTemplates;
+  applicationBaseUrl: string;
+}) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [drafts, setDrafts] = useState(initialTemplates);
   const [editing, setEditing] = useState<TemplateSection>();
   const [saving, setSaving] = useState<TemplateSection>();
   const [success, setSuccess] = useState<string>();
   const [error, setError] = useState<string>();
-  const emailPreview = createEmailPreview(templates);
+  const emailPreview = createEmailPreview(templates, applicationBaseUrl);
 
   function startEditing(section: TemplateSection) {
     setDrafts(templates);
@@ -200,15 +206,14 @@ function sectionLabel(section: TemplateSection) {
   return "Invitation email template";
 }
 
-function createEmailPreview(templates: PlatformTemplates) {
+function createEmailPreview(templates: PlatformTemplates, applicationBaseUrl: string) {
   return createEventInvitationEmail({
     eventName: "Example Terrier Pursuit Game",
     gameCode: "ABC234",
     startsAt: "2026-09-15T14:00:00.000Z",
     submissionDeadline: "2026-09-15T18:00:00.000Z",
     rules: "The game rules saved for this event will appear here.",
-    participantUrl:
-      "https://terrier-pursuit-prototype.vercel.app/participant/welcome?gameCode=ABC234",
+    participantUrl: `${applicationBaseUrl.replace(/\/$/, "")}/participant/welcome?gameCode=ABC234`,
     templates,
   });
 }
