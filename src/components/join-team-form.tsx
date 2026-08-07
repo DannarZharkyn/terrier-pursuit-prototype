@@ -136,6 +136,9 @@ export function JoinTeamForm() {
 
   return (
     <div className="space-y-5">
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+        Ask a teammate or team leader for the team code. They can find it on their Profile page and share it with you.
+      </div>
       <form className="space-y-5" onSubmit={handleSubmit}>
         <label className="block">
           <span className="label">Team Code</span>
@@ -146,6 +149,9 @@ export function JoinTeamForm() {
             onChange={(event) => setTeamCode(event.target.value)}
             disabled={isJoining}
           />
+          <span className="mt-2 block text-xs font-bold leading-5 text-amber-800">
+            Team code and game code are different. Enter the code for your team here—not the event’s game code.
+          </span>
         </label>
         <button
           className="btn-primary w-full disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"

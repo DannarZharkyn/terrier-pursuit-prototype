@@ -1,15 +1,6 @@
-import { defaultEventDisclaimer } from "@/lib/disclaimer/default";
-import { defaultEventRules } from "@/lib/rules/default";
-
-export type PlatformTemplates = {
-  rules: string;
-  disclaimer: string;
-  emailSubject: string;
-  emailBody: string;
-  participantInstructions: string;
-};
-
-export const defaultParticipantInstructions = `FOR PARTICIPANTS
+update public.platform_templates
+set participant_instructions = $instructions$
+FOR PARTICIPANTS
 
 1. Open the participant link or scan the event QR code.
 2. If you were pre-registered, sign in with the same name and email submitted by the organizer. If you are joining spontaneously, select “I was not pre-registered” to create your registration.
@@ -20,11 +11,10 @@ export const defaultParticipantInstructions = `FOR PARTICIPANTS
 
 FOR CAMPUS PARTNERS AND ORIENTATION LEADERS
 
-Create teams when needed, share each team code with the correct teammates, and confirm that everyone joins the intended team. Help spontaneous participants register with the event game code, then direct them to create or join the appropriate team.`;
-
-export const defaultInvitationEmailSubject = `You're invited to play {{eventName}}`;
-
-export const defaultInvitationEmailBody = `Dear Participant,
+Create teams when needed, share each team code with the correct teammates, and confirm that everyone joins the intended team. Help spontaneous participants register with the event game code, then direct them to create or join the appropriate team.
+$instructions$,
+email_body = $email$
+Dear Participant,
 
 Welcome to the Terrier Pursuit game!
 
@@ -48,14 +38,6 @@ studentwellbeing@bu.edu
 Boston, MA
 
 Good luck and have fun!
-Terrier Pursuit`;
-
-export const builtInPlatformTemplates: PlatformTemplates = {
-  rules: defaultEventRules,
-  disclaimer: defaultEventDisclaimer,
-  emailSubject: defaultInvitationEmailSubject,
-  emailBody: defaultInvitationEmailBody,
-  participantInstructions: defaultParticipantInstructions,
-};
-
-export const platformTemplateKey = "event_defaults";
+Terrier Pursuit
+$email$
+where template_key = 'event_defaults';

@@ -17,6 +17,7 @@ test("createEventInvitationEmail includes all participant instructions", () => {
   assert.match(email.body, /ABC234/);
   assert.match(email.body, /Stay together/);
   assert.match(email.body, /gameCode=ABC234/);
+  assert.match(email.body, /studentwellbeing@bu\.edu/);
 });
 
 test("replaceEventInvitationUrl keeps saved email text and updates its event link", () => {

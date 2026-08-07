@@ -142,7 +142,7 @@ export function ParticipantTeamCard({
         {team.teamCode}
       </p>
       <p className="mt-3 text-sm leading-6 text-gray-600">
-        Share this code with friends so they can join your team later.
+        Share this team code with your teammates and confirm that everyone appears in the member list below. This is not the event’s game code.
       </p>
       <div className="mt-5 rounded-lg bg-white p-4">
         <div className="flex items-center gap-2">

@@ -122,6 +122,9 @@ export function CreateTeamForm() {
     <div className="space-y-5">
       {!team ? (
         <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+            When you create the team, you become responsible for sharing its team code with every teammate and confirming that everyone joins the correct team.
+          </div>
           <label className="block">
             <span className="label">Team Name</span>
             <input

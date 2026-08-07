@@ -97,6 +97,9 @@ export function ParticipantJoinForm({ initialGameCode = "" }: ParticipantJoinFor
             value={gameCode}
             onChange={(event) => setGameCode(event.target.value)}
           />
+          <span className="mt-2 block text-xs font-semibold leading-5 text-gray-600">
+            The game code identifies your event. Get it from a teammate, orientation leader, event organizer, or administrator.
+          </span>
         </label>
         <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
           <input
@@ -110,10 +113,13 @@ export function ParticipantJoinForm({ initialGameCode = "" }: ParticipantJoinFor
               I was not pre-registered
             </span>
             <span className="mt-1 block text-sm leading-5 text-gray-600">
-              Create my registration using the details above.
+              Joining spontaneously? Select this option to register, get the game code from someone participating or managing the event, then join the appropriate team after signing in.
             </span>
           </span>
         </label>
+        <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs font-semibold leading-5 text-blue-900">
+          Already uploaded or pre-registered? Leave the box unchecked and sign in with the same name and email used by the organizer. You will choose whether to create or join a team next.
+        </div>
       </div>
 
       {error ? (
