@@ -1,11 +1,7 @@
 import { Logo } from "@/components/logo";
 import { OrganizerLoginForm } from "@/components/organizer-login-form";
 
-export default function OrganizerLoginPage({
-  searchParams,
-}: {
-  searchParams: { next?: string };
-}) {
+export default function OrganizerLoginPage() {
   return (
     <main className="page-shell flex items-center justify-center px-5 py-10">
       <section className="w-full max-w-md">
@@ -19,7 +15,7 @@ export default function OrganizerLoginPage({
           <p className="mt-2 text-sm leading-6 text-gray-600">
             Manage events, review team submissions, and keep the hunt moving.
           </p>
-          <OrganizerLoginForm nextPath={searchParams.next} />
+          <OrganizerLoginForm />
         </div>
       </section>
     </main>

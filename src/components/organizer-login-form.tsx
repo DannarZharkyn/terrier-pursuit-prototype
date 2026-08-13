@@ -5,7 +5,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isApprovedOrganizerEmail } from "@/lib/auth/organizer";
 
-export function OrganizerLoginForm({ nextPath }: { nextPath?: string }) {
+export function OrganizerLoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
@@ -32,10 +32,14 @@ export function OrganizerLoginForm({ nextPath }: { nextPath?: string }) {
         return;
       }
 
-      const destination = nextPath?.startsWith("/organizer/")
-        ? nextPath
-        : "/organizer/dashboard";
-      window.location.assign(destination);
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      if (!sessionData.session) {
+        setError("Could not start your organizer session. Please try again.");
+        return;
+      }
+
+      window.location.replace("/organizer/dashboard");
     } catch {
       setError("Could not sign in. Please try again.");
     } finally {
