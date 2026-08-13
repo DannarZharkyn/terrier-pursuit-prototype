@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Save, XCircle } from "lucide-react";
 import { TimePicker12 } from "@/components/time-picker-12";
+import { getBostonInputValues, parseBostonDateTime } from "@/lib/time/boston";
 
 type EditableEvent = {
   id: string;
@@ -18,21 +19,21 @@ type EditableEvent = {
 };
 
 export function EditEventForm({ event }: { event: EditableEvent }) {
-  const initialDate = new Date(event.startsAt);
-  const initialSubmissionDeadline = new Date(event.submissionDeadline);
+  const initialDate = getBostonInputValues(event.startsAt);
+  const initialSubmissionDeadline = getBostonInputValues(event.submissionDeadline);
   const [name, setName] = useState(event.name);
-  const [startDate, setStartDate] = useState(toDateInputValue(initialDate));
-  const [startTime, setStartTime] = useState(toTimeInputValue(initialDate));
-  const [submissionDate, setSubmissionDate] = useState(toDateInputValue(initialSubmissionDeadline));
-  const [submissionTime, setSubmissionTime] = useState(toTimeInputValue(initialSubmissionDeadline));
+  const [startDate, setStartDate] = useState(initialDate.date);
+  const [startTime, setStartTime] = useState(initialDate.time);
+  const [submissionDate, setSubmissionDate] = useState(initialSubmissionDeadline.date);
+  const [submissionTime, setSubmissionTime] = useState(initialSubmissionDeadline.time);
   const [rules, setRules] = useState(event.rules);
   const [disclaimer, setDisclaimer] = useState(event.disclaimer);
   const [emailSubject, setEmailSubject] = useState(event.emailSubject);
   const [emailBody, setEmailBody] = useState(event.emailBody);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
-  const startsAt = toLocalIsoDateTime(startDate, startTime);
-  const submissionDeadline = toLocalIsoDateTime(submissionDate, submissionTime);
+  const startsAt = parseBostonDateTime(startDate, startTime);
+  const submissionDeadline = parseBostonDateTime(submissionDate, submissionTime);
   const canSave = Boolean(
     name.trim()
     && startsAt
@@ -122,7 +123,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
       </label>
 
       <fieldset>
-        <legend className="label">Game Start Time</legend>
+        <legend className="label">Game Start Time (Boston time)</legend>
         <div className="mt-2 grid gap-3 md:grid-cols-[minmax(170px,0.8fr)_minmax(230px,1.2fr)]">
           <input
             className="field"
@@ -141,7 +142,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
       </fieldset>
 
       <fieldset>
-        <legend className="label">Submission Deadline</legend>
+        <legend className="label">Submission Deadline (Boston time)</legend>
         <div className="mt-2 grid gap-3 md:grid-cols-[minmax(170px,0.8fr)_minmax(230px,1.2fr)]">
           <input
             className="field"
@@ -228,38 +229,4 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
       </div>
     </form>
   );
-}
-
-function toDateInputValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function toTimeInputValue(date: Date) {
-  const hour = String(date.getHours()).padStart(2, "0");
-  const minute = String(Math.floor(date.getMinutes() / 5) * 5).padStart(2, "0");
-  return `${hour}:${minute}`;
-}
-
-function toLocalIsoDateTime(dateText: string, timeText: string) {
-  const dateMatch = dateText.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const timeMatch = timeText.match(/^(\d{2}):(\d{2})$/);
-
-  if (!dateMatch || !timeMatch) {
-    return "";
-  }
-
-  const date = new Date(
-    Number(dateMatch[1]),
-    Number(dateMatch[2]) - 1,
-    Number(dateMatch[3]),
-    Number(timeMatch[1]),
-    Number(timeMatch[2]),
-  );
-
-  return Number.isNaN(date.getTime()) || Number(timeMatch[2]) % 5 !== 0
-    ? ""
-    : date.toISOString();
 }

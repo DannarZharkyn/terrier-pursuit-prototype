@@ -10,6 +10,7 @@ import {
   type ParticipantSession,
 } from "@/lib/participant-session";
 import { participantRulesChangedEvent } from "@/lib/participant-realtime";
+import { formatBostonDateTime } from "@/lib/time/boston";
 
 const second = 1000;
 
@@ -194,12 +195,5 @@ function formatCountdown(milliseconds: number) {
 }
 
 function formatUsDateTime(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(value));
+  return formatBostonDateTime(value);
 }

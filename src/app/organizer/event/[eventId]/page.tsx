@@ -10,6 +10,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createEventInvitationEmail, replaceEventInvitationUrl } from "@/lib/email/event-invitation";
 import { createEventParticipantUrl } from "@/lib/events/participant-url";
 import { getApplicationBaseUrl } from "@/lib/app-url";
+import { formatBostonDateTime } from "@/lib/time/boston";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -370,7 +371,7 @@ async function getEventDashboard(eventId: string) {
       memberCount: memberCounts.get(team.id as string) ?? 0,
       memberNames: memberNames.get(team.id as string) ?? [],
       submissionStatus: submission ? formatStatus(submission.status) : "Not Submitted",
-      submissionTime: submission?.submittedAt ? formatTime(submission.submittedAt) : "-",
+      submissionTime: submission?.submittedAt ? formatBostonDateTime(submission.submittedAt) : "-",
     };
   });
 
@@ -409,11 +410,7 @@ async function getEventDashboard(eventId: string) {
 }
 
 function formatEventDateTime(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "America/New_York",
-  }).format(new Date(value));
+  return formatBostonDateTime(value);
 }
 
 function formatStatus(status: string) {
@@ -421,11 +418,4 @@ function formatStatus(status: string) {
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
 }

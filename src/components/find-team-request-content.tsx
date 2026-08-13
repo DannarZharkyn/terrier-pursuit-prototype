@@ -13,6 +13,7 @@ import {
   readParticipantSession,
   type ParticipantSession,
 } from "@/lib/participant-session";
+import { formatBostonDateTime } from "@/lib/time/boston";
 
 export function FindTeamRequestContent() {
   const router = useRouter();
@@ -249,12 +250,5 @@ async function fetchTeamRequest(storedSession: ParticipantSession) {
 }
 
 function formatRequestedAt(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(value));
+  return formatBostonDateTime(value);
 }

@@ -8,6 +8,7 @@ import { useParticipantTeamChanges } from "@/hooks/use-participant-team-changes"
 import { readParticipantSession } from "@/lib/participant-session";
 import type { CurrentTeamResponse, ParticipantTeam } from "@/lib/participant-teams/types";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { formatBostonDateTime } from "@/lib/time/boston";
 
 type SavedPhoto = {
   id: string;
@@ -301,7 +302,7 @@ export function ParticipantUploadsContent() {
                           />
                           <p className="mt-3 text-xs font-semibold text-gray-600">
                             Saved by {location.photo.uploadedBy} ·{" "}
-                            {new Date(location.photo.uploadedAt).toLocaleString()}
+                            {formatBostonDateTime(location.photo.uploadedAt)}
                           </p>
                         </div>
                       ) : null}

@@ -3,6 +3,7 @@ import { CalendarPlus } from "lucide-react";
 import { OrganizerEventList } from "@/components/organizer-event-list";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { formatBostonDate } from "@/lib/time/boston";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -79,11 +80,7 @@ function formatEventDate(value: string | null) {
     return "Date not set";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
+  return formatBostonDate(value);
 }
 
 function formatStatus(status: string) {

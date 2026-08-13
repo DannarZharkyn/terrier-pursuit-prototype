@@ -5,6 +5,7 @@ import { ArrowRight, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { formatBostonDateTime } from "@/lib/time/boston";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -190,7 +191,7 @@ async function getEventTeams(eventId: string) {
         name: team.name as string,
         memberNames: membersByTeam.get(team.id as string) ?? [],
         submissionStatus: submission ? formatStatus(submission.status) : "Not Submitted",
-        submissionTime: submission?.submittedAt ? formatTime(submission.submittedAt) : "-",
+        submissionTime: submission?.submittedAt ? formatBostonDateTime(submission.submittedAt) : "-",
       };
     }),
   };
@@ -201,11 +202,4 @@ function formatStatus(status: string) {
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
-}
-
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
 }

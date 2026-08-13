@@ -10,6 +10,7 @@ import { saveCreateEventDraft } from "@/lib/imports/create-event-draft";
 import type { EventLocationImportResult } from "@/lib/imports/event-locations";
 import type { ParticipantImportResult } from "@/lib/imports/participants";
 import type { PlatformTemplates } from "@/lib/templates/defaults";
+import { parseBostonDateTime } from "@/lib/time/boston";
 
 export function CreateEventForm({ initialTemplates }: { initialTemplates: PlatformTemplates }) {
   const router = useRouter();
@@ -22,8 +23,8 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
   const [disclaimer, setDisclaimer] = useState(initialTemplates.disclaimer);
   const [participantResult, setParticipantResult] = useState<ParticipantImportResult>();
   const [locationResult, setLocationResult] = useState<EventLocationImportResult>();
-  const startsAt = toLocalIsoDateTime(startDate, startTime);
-  const submissionDeadline = toLocalIsoDateTime(submissionDate, submissionTime);
+  const startsAt = parseBostonDateTime(startDate, startTime);
+  const submissionDeadline = parseBostonDateTime(submissionDate, submissionTime);
   const canReview =
     eventName.trim().length > 0 &&
     Boolean(startsAt) &&
@@ -71,7 +72,7 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
           />
         </label>
         <fieldset>
-          <legend className="label">Event Start Time</legend>
+          <legend className="label">Event Start Time (Boston time)</legend>
           <div className="mt-2 grid gap-3 xl:grid-cols-[minmax(150px,0.8fr)_minmax(230px,1.2fr)]">
             <input
               className="field"
@@ -88,7 +89,7 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
           </div>
         </fieldset>
         <fieldset>
-          <legend className="label">Submission Deadline</legend>
+          <legend className="label">Submission Deadline (Boston time)</legend>
           <div className="mt-2 grid gap-3 xl:grid-cols-[minmax(150px,0.8fr)_minmax(230px,1.2fr)]">
             <input
               className="field"
@@ -162,46 +163,4 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
       </div>
     </div>
   );
-}
-
-function toLocalIsoDateTime(dateText: string, timeText: string) {
-  const dateMatch = dateText.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const timeMatch = timeText.trim().match(/^(\d{2}):(\d{2})$/);
-
-  if (!dateMatch || !timeMatch) {
-    return "";
-  }
-
-  const year = Number(dateMatch[1]);
-  const month = Number(dateMatch[2]);
-  const day = Number(dateMatch[3]);
-  const hour = Number(timeMatch[1]);
-  const minute = Number(timeMatch[2]);
-
-  if (
-    month < 1 ||
-    month > 12 ||
-    day < 1 ||
-    day > 31 ||
-    hour < 0 ||
-    hour > 23 ||
-    minute > 59 ||
-    minute % 5 !== 0
-  ) {
-    return "";
-  }
-
-  const date = new Date(year, month - 1, day, hour, minute);
-
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day ||
-    date.getHours() !== hour ||
-    date.getMinutes() !== minute
-  ) {
-    return "";
-  }
-
-  return date.toISOString();
 }
