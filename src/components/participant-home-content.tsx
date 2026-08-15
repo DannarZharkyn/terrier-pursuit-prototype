@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Flag, Timer } from "lucide-react";
 import { ParticipantShell } from "@/components/participant-shell";
+import { ParticipantStoryHero } from "@/components/participant-story-hero";
 import {
   readParticipantSession,
   refreshParticipantSession,
@@ -75,6 +76,7 @@ export function ParticipantHomeContent() {
   return (
     <ParticipantShell title="Game Home">
       <div className="space-y-6">
+        <ParticipantStoryHero compact />
         <section className="card p-5">
           <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Current Game</p>
           <h2 className="mt-1 text-xl font-black text-gray-950">{session.event.name}</h2>

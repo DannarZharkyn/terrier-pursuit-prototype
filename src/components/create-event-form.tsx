@@ -4,15 +4,23 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileSpreadsheet } from "lucide-react";
 import { EventLocationsUpload } from "@/components/event-locations-upload";
+import { MasterLocationSelector } from "@/components/master-location-selector";
 import { ParticipantListUpload } from "@/components/participant-list-upload";
 import { TimePicker12 } from "@/components/time-picker-12";
 import { saveCreateEventDraft } from "@/lib/imports/create-event-draft";
 import type { EventLocationImportResult } from "@/lib/imports/event-locations";
 import type { ParticipantImportResult } from "@/lib/imports/participants";
 import type { PlatformTemplates } from "@/lib/templates/defaults";
+import { masterLocationToEventLocation, type MasterLocation } from "@/lib/master-locations";
 import { parseBostonDateTime } from "@/lib/time/boston";
 
-export function CreateEventForm({ initialTemplates }: { initialTemplates: PlatformTemplates }) {
+export function CreateEventForm({
+  initialTemplates,
+  masterLocations,
+}: {
+  initialTemplates: PlatformTemplates;
+  masterLocations: MasterLocation[];
+}) {
   const router = useRouter();
   const [eventName, setEventName] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -23,6 +31,16 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
   const [disclaimer, setDisclaimer] = useState(initialTemplates.disclaimer);
   const [participantResult, setParticipantResult] = useState<ParticipantImportResult>();
   const [locationResult, setLocationResult] = useState<EventLocationImportResult>();
+  const [selectedMasterIds, setSelectedMasterIds] = useState<string[]>([]);
+  const selectedMasterLocations = selectedMasterIds
+    .map((id) => masterLocations.find((location) => location.id === id))
+    .filter((location): location is MasterLocation => Boolean(location));
+  const uploadedLocations = locationResult?.ok ? locationResult.locations : [];
+  const combinedLocations = [...selectedMasterLocations.map((location, index) =>
+    masterLocationToEventLocation(location, index + 1)), ...uploadedLocations]
+    .filter((location, index, all) =>
+      all.findIndex((candidate) => candidate.normalizedLandmark === location.normalizedLandmark) === index)
+    .map((location, index) => ({ ...location, position: index + 1 }));
   const startsAt = parseBostonDateTime(startDate, startTime);
   const submissionDeadline = parseBostonDateTime(submissionDate, submissionTime);
   const canReview =
@@ -32,7 +50,8 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
     rules.trim().length > 0 &&
     disclaimer.trim().length > 0 &&
     participantResult?.ok === true &&
-    locationResult?.ok === true;
+    combinedLocations.length > 0 &&
+    locationResult?.ok !== false;
 
   function handleReview() {
     if (!canReview) {
@@ -48,7 +67,7 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
         disclaimer: disclaimer.trim(),
       },
       participants: participantResult.participants,
-      locations: locationResult.locations,
+      locations: combinedLocations,
       templates: {
         emailSubject: initialTemplates.emailSubject,
         emailBody: initialTemplates.emailBody,
@@ -106,9 +125,21 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
           </div>
         </fieldset>
       </div>
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+      <div className="mt-8">
+        <MasterLocationSelector
+          locations={masterLocations}
+          selectedIds={selectedMasterIds}
+          onChange={setSelectedMasterIds}
+        />
+      </div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <ParticipantListUpload onResultChange={setParticipantResult} />
-        <EventLocationsUpload onResultChange={setLocationResult} />
+        <div>
+          <EventLocationsUpload onResultChange={setLocationResult} />
+          <p className="mt-2 text-xs leading-5 text-gray-500">
+            Optional when you use the master list. Uploaded locations are added to your checked locations; duplicates are included only once.
+          </p>
+        </div>
       </div>
       <label className="mt-6 block">
         <span className="label flex items-center gap-2">
@@ -156,7 +187,7 @@ export function CreateEventForm({ initialTemplates }: { initialTemplates: Platfo
               Review & Publish
             </button>
             <p className="max-w-2xl text-sm font-semibold leading-6 text-gray-500 sm:text-right">
-              Complete all event fields with the date and time pickers, then upload valid participant and locations files to continue.
+              Complete all event fields, upload a valid participant list, and select at least one location (or upload a valid locations file) to continue.
             </p>
           </>
         )}

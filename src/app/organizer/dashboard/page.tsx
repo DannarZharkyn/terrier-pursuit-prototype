@@ -4,6 +4,7 @@ import { OrganizerEventList } from "@/components/organizer-event-list";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatBostonDate } from "@/lib/time/boston";
+import { getDataEnvironment } from "@/lib/data-environment";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -43,6 +44,7 @@ async function getOrganizerEvents() {
     supabase
       .from("events")
       .select("id, name, game_code, status, starts_at, created_at")
+      .eq("data_environment", getDataEnvironment())
       .order("created_at", { ascending: false }),
     supabase.from("teams").select("event_id"),
   ]);

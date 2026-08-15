@@ -5,6 +5,7 @@ import { ArrowRight, Users } from "lucide-react";
 import { OrganizerShell } from "@/components/organizer-shell";
 import { PageBackLink } from "@/components/page-back-link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getDataEnvironment } from "@/lib/data-environment";
 import { formatBostonDateTime } from "@/lib/time/boston";
 
 export const dynamic = "force-dynamic";
@@ -114,6 +115,7 @@ async function getEventTeams(eventId: string) {
     .from("events")
     .select("name")
     .eq("id", eventId)
+    .eq("data_environment", getDataEnvironment())
     .maybeSingle();
 
   if (event.error || !event.data) {

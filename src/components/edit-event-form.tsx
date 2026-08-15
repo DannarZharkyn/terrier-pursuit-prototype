@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Save, XCircle } from "lucide-react";
 import { TimePicker12 } from "@/components/time-picker-12";
+import { MasterLocationSelector } from "@/components/master-location-selector";
+import type { MasterLocation } from "@/lib/master-locations";
 import { getBostonInputValues, parseBostonDateTime } from "@/lib/time/boston";
 
 type EditableEvent = {
@@ -18,7 +20,17 @@ type EditableEvent = {
   emailBody: string;
 };
 
-export function EditEventForm({ event }: { event: EditableEvent }) {
+type EditableLocation = Omit<MasterLocation, "id"> & { id: string };
+
+export function EditEventForm({
+  event,
+  locations,
+  masterLocations,
+}: {
+  event: EditableEvent;
+  locations: EditableLocation[];
+  masterLocations: MasterLocation[];
+}) {
   const initialDate = getBostonInputValues(event.startsAt);
   const initialSubmissionDeadline = getBostonInputValues(event.submissionDeadline);
   const [name, setName] = useState(event.name);
@@ -32,6 +44,18 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
   const [emailBody, setEmailBody] = useState(event.emailBody);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>();
+  const initialMasterIds = masterLocations
+    .filter((master) => locations.some((location) => location.landmark.toLowerCase() === master.landmark.toLowerCase()))
+    .map((location) => location.id);
+  const [selectedMasterIds, setSelectedMasterIds] = useState(initialMasterIds);
+  const [customLocations, setCustomLocations] = useState(
+    locations.filter((location) => !masterLocations.some((master) => master.landmark.toLowerCase() === location.landmark.toLowerCase())),
+  );
+  const canEditLocations = new Date(event.startsAt).getTime() > Date.now();
+  const selectedLocations = [
+    ...selectedMasterIds.map((id) => masterLocations.find((location) => location.id === id)).filter((location): location is MasterLocation => Boolean(location)),
+    ...customLocations,
+  ];
   const startsAt = parseBostonDateTime(startDate, startTime);
   const submissionDeadline = parseBostonDateTime(submissionDate, submissionTime);
   const canSave = Boolean(
@@ -41,7 +65,8 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
     && rules.trim()
     && disclaimer.trim()
     && emailSubject.trim()
-    && emailBody.trim(),
+    && emailBody.trim()
+    && selectedLocations.length > 0,
   );
 
   async function handleSubmit(submitEvent: FormEvent<HTMLFormElement>) {
@@ -70,6 +95,7 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
           disclaimer,
           emailSubject,
           emailBody,
+          locations: selectedLocations,
         }),
       });
       const result = (await response.json()) as { ok: boolean; error?: string };
@@ -140,6 +166,39 @@ export function EditEventForm({ event }: { event: EditableEvent }) {
           />
         </div>
       </fieldset>
+
+      <div className="border-t border-gray-200 pt-6">
+        <MasterLocationSelector
+          locations={masterLocations}
+          selectedIds={selectedMasterIds}
+          onChange={setSelectedMasterIds}
+          disabled={!canEditLocations}
+        />
+        {customLocations.length ? (
+          <div className="mt-3 rounded-lg border border-gray-200 p-4">
+            <p className="text-sm font-black text-gray-950">Locations previously added by spreadsheet</p>
+            <div className="mt-2 space-y-2">
+              {customLocations.map((location) => (
+                <label key={location.id} className="flex items-center gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 accent-red-600"
+                    checked
+                    disabled={!canEditLocations}
+                    onChange={() => setCustomLocations((current) => current.filter((item) => item.id !== location.id))}
+                  />
+                  {location.landmark}
+                </label>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <p className={`mt-3 rounded-lg p-3 text-sm font-semibold ${canEditLocations ? "bg-blue-50 text-blue-900" : "bg-amber-50 text-amber-900"}`}>
+          {canEditLocations
+            ? "You can add or remove locations until the game starts. Saving updates every participant's clue list."
+            : "This game has started, so its location list is locked."}
+        </p>
+      </div>
 
       <fieldset>
         <legend className="label">Submission Deadline (Boston time)</legend>

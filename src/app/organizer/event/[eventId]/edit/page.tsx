@@ -7,6 +7,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createEventInvitationEmail, replaceEventInvitationUrl } from "@/lib/email/event-invitation";
 import { createEventParticipantUrl } from "@/lib/events/participant-url";
 import { getApplicationBaseUrl } from "@/lib/app-url";
+import { getDataEnvironment } from "@/lib/data-environment";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,11 +23,23 @@ export default async function EditEventPage({
     .from("events")
     .select("id, name, game_code, starts_at, submission_deadline, rules, disclaimer_text, disclaimer_locked_at, email_subject, email_body")
     .eq("id", params.eventId)
+    .eq("data_environment", getDataEnvironment())
     .maybeSingle();
 
   if (error || !event) {
     notFound();
   }
+
+  const [locationResult, masterResult] = await Promise.all([
+    supabase.from("event_locations")
+      .select("id, position, landmark, location_url, clue, campus_population")
+      .eq("event_id", event.id)
+      .order("position"),
+    supabase.from("master_locations")
+      .select("id, landmark, location_url, clue, campus_population")
+      .eq("active", true)
+      .order("landmark"),
+  ]);
 
   const participantUrl = createEventParticipantUrl(
     getApplicationBaseUrl(),
@@ -68,6 +81,20 @@ export default async function EditEventPage({
             participantUrl,
           ),
         }}
+        locations={(locationResult.data ?? []).map((location) => ({
+          id: location.id as string,
+          landmark: location.landmark as string,
+          locationUrl: location.location_url as string,
+          clue: location.clue as string,
+          campusPopulation: location.campus_population as string,
+        }))}
+        masterLocations={(masterResult.data ?? []).map((location) => ({
+          id: location.id as string,
+          landmark: location.landmark as string,
+          locationUrl: location.location_url as string,
+          clue: location.clue as string,
+          campusPopulation: location.campus_population as string,
+        }))}
       />
     </OrganizerShell>
   );

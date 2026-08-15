@@ -5,6 +5,7 @@ import { validatePublishEventRequest } from "@/lib/publish-event/validation";
 import type { PublishEventResponse } from "@/lib/publish-event/types";
 import { createEventInvitationEmail } from "@/lib/email/event-invitation";
 import { createEventParticipantUrl } from "@/lib/events/participant-url";
+import { getDataEnvironment } from "@/lib/data-environment";
 
 const gameCodeCharacters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const maxGameCodeAttempts = 5;
@@ -156,6 +157,7 @@ async function insertEventWithUniqueGameCode(
         disclaimer_text: event.disclaimer,
         email_subject: emailTemplate.subject,
         email_body: emailTemplate.body,
+        data_environment: getDataEnvironment(),
       })
       .select("id")
       .single();

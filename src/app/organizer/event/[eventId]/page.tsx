@@ -7,6 +7,7 @@ import { PageBackLink } from "@/components/page-back-link";
 import { EventEmailTemplate } from "@/components/event-email-template";
 import { EventQrCode } from "@/components/event-qr-code";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getDataEnvironment } from "@/lib/data-environment";
 import { createEventInvitationEmail, replaceEventInvitationUrl } from "@/lib/email/event-invitation";
 import { createEventParticipantUrl } from "@/lib/events/participant-url";
 import { getApplicationBaseUrl } from "@/lib/app-url";
@@ -248,6 +249,7 @@ async function getEventDashboard(eventId: string) {
     .from("events")
     .select("id, name, game_code, starts_at, submission_deadline, rules, disclaimer_text, disclaimer_locked_at, email_subject, email_body")
     .eq("id", eventId)
+    .eq("data_environment", getDataEnvironment())
     .single();
 
   if (eventError) {

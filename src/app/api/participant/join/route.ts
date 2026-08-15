@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getDataEnvironment } from "@/lib/data-environment";
 import { validateParticipantJoinRequest } from "@/lib/participant-join/validation";
 import type { ParticipantJoinResponse } from "@/lib/participant-join/types";
 import { normalizeLegacyPunctuation } from "@/lib/text/normalize-legacy-punctuation";
@@ -179,6 +180,7 @@ async function getPublishedEvent(gameCode: string) {
     .select("id, name, game_code, status, starts_at, submission_deadline, rules")
     .eq("status", "published")
     .eq("game_code", gameCode)
+    .eq("data_environment", getDataEnvironment())
     .maybeSingle();
 
   return {

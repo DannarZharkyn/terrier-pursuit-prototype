@@ -2,6 +2,8 @@ import { unstable_noStore as noStore } from "next/cache";
 import { Logo } from "@/components/logo";
 import { ParticipantJoinForm } from "@/components/participant-join-form";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getDataEnvironment } from "@/lib/data-environment";
+import { ParticipantStoryHero } from "@/components/participant-story-hero";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -26,7 +28,9 @@ export default async function ParticipantWelcomePage({
 
   return (
     <main className="min-h-screen bg-gray-100">
-      <section className="mx-auto flex min-h-screen max-w-md flex-col justify-center bg-white px-5 py-8 shadow-soft">
+      <section className="mx-auto min-h-screen max-w-md bg-white shadow-soft">
+        <ParticipantStoryHero />
+        <div className="px-5 py-8">
         <div className="mb-8">
           <Logo href="/participant/welcome" />
           <h1 className="mt-8 text-3xl font-black text-gray-950">
@@ -47,6 +51,7 @@ export default async function ParticipantWelcomePage({
           ) : null}
         </div>
         <ParticipantJoinForm initialGameCode={validCode} />
+        </div>
       </section>
     </main>
   );
@@ -58,7 +63,8 @@ async function publishedGameCode(gameCode: string, eventId?: string) {
     .from("events")
     .select("game_code")
     .eq("game_code", gameCode)
-    .eq("status", "published");
+    .eq("status", "published")
+    .eq("data_environment", getDataEnvironment());
 
   if (eventId) {
     query = query.eq("id", eventId);

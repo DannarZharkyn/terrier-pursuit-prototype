@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getDataEnvironment } from "@/lib/data-environment";
 import { generateTeamCode } from "@/lib/participant-teams/team-code";
 import {
   validateCreateTeamRequest,
@@ -223,7 +224,8 @@ async function getPublishedEventParticipant(
     .from("events")
     .select("id")
     .eq("id", eventId)
-    .eq("status", "published");
+    .eq("status", "published")
+    .eq("data_environment", getDataEnvironment());
 
   if (eventError || !eventData || eventData.length !== 1) {
     return undefined;

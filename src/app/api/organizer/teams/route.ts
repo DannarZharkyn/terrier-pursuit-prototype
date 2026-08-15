@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { generateTeamCode } from "@/lib/participant-teams/team-code";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getDataEnvironment } from "@/lib/data-environment";
 
 const maxTeamCodeAttempts = 5;
 
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
     .from("events")
     .select("id")
     .eq("id", eventId)
+    .eq("data_environment", getDataEnvironment())
     .maybeSingle();
 
   if (eventError) {
