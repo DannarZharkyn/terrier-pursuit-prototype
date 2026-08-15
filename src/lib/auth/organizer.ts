@@ -1,5 +1,11 @@
-export const APPROVED_ORGANIZER_EMAIL = "studentwellbeing@bu.edu";
+export const APPROVED_ORGANIZER_EMAILS = [
+  "studentwellbeing@bu.edu",
+  "anab@bu.edu",
+] as const;
 
 export function isApprovedOrganizerEmail(email: string | null | undefined) {
-  return email?.trim().toLowerCase() === APPROVED_ORGANIZER_EMAIL;
+  const normalizedEmail = email?.trim().toLowerCase();
+  return Boolean(
+    normalizedEmail && APPROVED_ORGANIZER_EMAILS.some((approved) => approved === normalizedEmail),
+  );
 }
