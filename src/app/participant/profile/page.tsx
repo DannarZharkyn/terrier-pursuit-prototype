@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, MapPin, MessageCircle, Ticket, User, Users } from "lucide-react";
+import { LogOut, Mail, MapPin, MessageCircle, Ticket, User, Users } from "lucide-react";
 import { ParticipantShell } from "@/components/participant-shell";
 import { useParticipantTeamChanges } from "@/hooks/use-participant-team-changes";
 import type { CurrentTeamResponse, ParticipantTeam } from "@/lib/participant-teams/types";
+import { clearParticipantConsentVerification } from "@/lib/participant-consent-session";
 import {
+  clearParticipantSession,
   readParticipantSession,
   type ParticipantSession,
 } from "@/lib/participant-session";
@@ -53,6 +55,15 @@ export default function ProfilePage() {
     } catch {
       setTeamError("Team information could not be loaded.");
     }
+  }
+
+  function handleLogOut() {
+    if (!session) return;
+
+    clearParticipantConsentVerification(session.event.id, session.participant.id);
+    clearParticipantSession();
+    router.replace("/participant/welcome");
+    router.refresh();
   }
 
   if (!session) {
@@ -156,6 +167,19 @@ export default function ProfilePage() {
             <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-bu-red" />
             <address className="not-italic">Student Wellbeing<br />930 Commonwealth Ave, Suite 1020<br />Boston, MA</address>
           </div>
+        </section>
+        <section className="card p-5">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-3 text-sm font-black text-bu-red transition hover:bg-red-50"
+            onClick={handleLogOut}
+          >
+            <LogOut className="h-5 w-5" />
+            Log Out
+          </button>
+          <p className="mt-2 text-center text-xs leading-5 text-gray-500">
+            This returns you to participant sign-in on this device.
+          </p>
         </section>
       </div>
     </ParticipantShell>
