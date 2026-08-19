@@ -4,6 +4,10 @@ import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { MasterLocation } from "@/lib/master-locations";
 
+type CampusFilter = "All" | "CRC" | "Both" | "BUMC";
+
+const campusFilters: CampusFilter[] = ["All", "CRC", "Both", "BUMC"];
+
 export function MasterLocationSelector({
   locations,
   selectedIds,
@@ -16,14 +20,22 @@ export function MasterLocationSelector({
   disabled?: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [campusFilter, setCampusFilter] = useState<CampusFilter>("All");
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return normalized
-      ? locations.filter((location) =>
-          `${location.landmark} ${location.campusPopulation}`.toLowerCase().includes(normalized),
-        )
-      : locations;
-  }, [locations, query]);
+    return locations.filter((location) => {
+      const matchesCampus = campusFilter === "All"
+        || location.campusPopulation.trim().toLowerCase() === campusFilter.toLowerCase();
+      const matchesQuery = !normalized
+        || `${location.landmark} ${location.campusPopulation}`.toLowerCase().includes(normalized);
+
+      return matchesCampus && matchesQuery;
+    });
+  }, [campusFilter, locations, query]);
+
+  const visibleIds = filtered.map((location) => location.id);
+  const allVisibleSelected = visibleIds.length > 0
+    && visibleIds.every((id) => selectedIds.includes(id));
 
   function toggle(id: string) {
     onChange(
@@ -31,6 +43,15 @@ export function MasterLocationSelector({
         ? selectedIds.filter((selectedId) => selectedId !== id)
         : [...selectedIds, id],
     );
+  }
+
+  function toggleVisible() {
+    if (allVisibleSelected) {
+      onChange(selectedIds.filter((id) => !visibleIds.includes(id)));
+      return;
+    }
+
+    onChange([...new Set([...selectedIds, ...visibleIds])]);
   }
 
   return (
@@ -55,6 +76,35 @@ export function MasterLocationSelector({
           onChange={(event) => setQuery(event.target.value)}
         />
       </label>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-xs font-bold uppercase tracking-wide text-gray-500">
+          Filter:
+        </span>
+        {campusFilters.map((filter) => (
+          <button
+            key={filter}
+            type="button"
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${campusFilter === filter
+              ? "border-bu-red bg-bu-red text-white"
+              : "border-gray-300 bg-white text-gray-700 hover:border-bu-red hover:text-bu-red"}`}
+            aria-pressed={campusFilter === filter}
+            onClick={() => setCampusFilter(filter)}
+          >
+            {filter}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="ml-auto rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-bu-red hover:text-bu-red disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={disabled || visibleIds.length === 0}
+          onClick={toggleVisible}
+        >
+          {allVisibleSelected ? "Clear visible" : "Select all visible"}
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-gray-500">
+        Showing {filtered.length} of {locations.length} locations
+      </p>
       <div className="mt-4 max-h-80 space-y-2 overflow-y-auto pr-1">
         {filtered.length ? filtered.map((location) => (
           <label
