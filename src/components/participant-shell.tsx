@@ -39,10 +39,10 @@ export function ParticipantShell({
         <header className="participant-journal-header sticky top-0 z-20 overflow-hidden border-b border-white/15 bg-[#1d1010]/90 px-4 py-4 text-white backdrop-blur-xl sm:px-5">
           <div className="participant-header-orbit" aria-hidden="true" />
           <DetectiveTerrier className="participant-header-terrier absolute -right-2 bottom-0 h-[8.5rem]" />
-          <div className="relative z-10 max-w-[72%]">
-          <Logo href="/participant/home" />
+          <div className="relative z-10">
+          <div className="max-w-[72%]"><Logo href="/participant/home" /></div>
           <p className="mt-4 text-[10px] font-black uppercase tracking-[0.22em] text-red-200">Terrier field journal</p>
-          <h1 className="hunt-display mt-1 text-3xl uppercase leading-none text-white">{title}</h1>
+          <h1 className="hunt-display relative z-10 mt-1 pr-2 text-3xl uppercase leading-none text-white">{title}</h1>
           </div>
         </header>
         <section className="relative z-10 px-4 py-5 sm:px-5 sm:py-6">{children}</section>
