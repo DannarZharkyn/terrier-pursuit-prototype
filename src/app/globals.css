@@ -78,11 +78,13 @@ body {
 }
 
 .participant-hero-copy {
-  bottom: 4.75rem;
+  top: 45%;
+  bottom: auto;
+  transform: translateY(-50%);
 }
 
 .participant-hero-compact .participant-hero-photo {
-  object-position: 48% center;
+  object-position: 50% 44%;
 }
 
 .participant-hero-compact .participant-hero-shade {
@@ -90,7 +92,39 @@ body {
 }
 
 .participant-hero-compact .participant-hero-copy {
-  bottom: 0;
+  top: 42%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+
+.participant-hero-compact .participant-hero-tagline {
+  font-size: 0.75rem;
+}
+
+.participant-journal-header::after {
+  content: "";
+  position: absolute;
+  right: -1.25rem;
+  bottom: -3rem;
+  width: 9rem;
+  height: 9rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1.8rem rgba(255, 255, 255, 0.035), 0 0 0 3.4rem rgba(255, 255, 255, 0.025);
+}
+
+.participant-header-orbit {
+  position: absolute;
+  right: 4.8rem;
+  top: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px dashed rgba(255, 182, 182, 0.24);
+  border-radius: 9999px;
+}
+
+.participant-header-terrier {
+  z-index: 2;
 }
 
 .participant-route-art {
@@ -224,7 +258,7 @@ body {
 
 @media (max-width: 420px) {
   .participant-hero-welcome {
-    min-height: 35rem;
+    min-height: 25rem;
   }
 
   .participant-hero-welcome .participant-hero-photo {
@@ -232,17 +266,13 @@ body {
   }
 
   .participant-hero-welcome .participant-hero-copy {
-    bottom: 5.75rem;
+    top: 43%;
+    bottom: auto;
   }
 
   .participant-hero-welcome .detective-terrier {
     right: -3rem;
     height: 15rem;
-  }
-
-  .participant-hero-compact .detective-terrier {
-    right: -2rem;
-    height: 10.5rem;
   }
 
   .participant-artifact-map {
