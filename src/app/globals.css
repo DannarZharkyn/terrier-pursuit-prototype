@@ -82,7 +82,7 @@ body {
 }
 
 .participant-hero-compact .participant-hero-photo {
-  object-position: 52% center;
+  object-position: 48% center;
 }
 
 .participant-hero-compact .participant-hero-shade {
@@ -175,6 +175,53 @@ body {
   font-weight: 700;
 }
 
+.participant-scroll-artifacts {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.participant-artifact {
+  position: absolute;
+  height: auto;
+  filter: drop-shadow(0 12px 12px rgba(48, 27, 17, 0.2));
+}
+
+.participant-artifact-map {
+  top: 38rem;
+  right: -6.5rem;
+  width: 11.5rem;
+  transform: rotate(-12deg);
+  animation: artifact-drift 8s ease-in-out infinite;
+}
+
+.participant-artifact-balloon {
+  top: 68rem;
+  left: -2.2rem;
+  width: 5.5rem;
+  transform: rotate(5deg);
+  animation: balloon-drift 10s ease-in-out infinite;
+}
+
+.participant-artifact-map-lower {
+  top: 102rem;
+  left: -6rem;
+  width: 10rem;
+  transform: rotate(17deg);
+}
+
+@keyframes artifact-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-12deg); }
+  50% { transform: translate3d(-4px, -6px, 0) rotate(-9deg); }
+}
+
+@keyframes balloon-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(5deg); }
+  50% { transform: translate3d(5px, -10px, 0) rotate(1deg); }
+}
+
 @media (max-width: 420px) {
   .participant-hero-welcome {
     min-height: 35rem;
@@ -196,6 +243,14 @@ body {
   .participant-hero-compact .detective-terrier {
     right: -2rem;
     height: 10.5rem;
+  }
+
+  .participant-artifact-map {
+    right: -7.25rem;
+  }
+
+  .participant-artifact-map-lower {
+    left: -6.75rem;
   }
 }
 
@@ -266,7 +321,8 @@ body {
   .participant-hero-photo,
   .detective-terrier,
   .terrier-ping,
-  .mystery-radar::after {
+  .mystery-radar::after,
+  .participant-artifact {
     animation: none !important;
   }
 }
@@ -295,7 +351,7 @@ textarea {
   }
 
   .field {
-    @apply w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-bu-red focus:ring-4 focus:ring-red-50;
+    @apply w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-bu-red focus:ring-4 focus:ring-red-50 sm:text-sm;
   }
 
   .label {

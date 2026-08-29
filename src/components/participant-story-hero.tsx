@@ -8,7 +8,7 @@ export function ParticipantStoryHero({ compact = false }: { compact?: boolean })
       className={`participant-hero relative isolate overflow-hidden text-white ${compact ? "participant-hero-compact h-[17.5rem] rounded-[1.5rem]" : "participant-hero-welcome min-h-[35.5rem]"}`}
     >
       <Image
-        src="/images/participant-stories/tea-cup.jpg"
+        src={compact ? "/images/participant-stories/team-selfie.jpg" : "/images/participant-stories/tea-cup.jpg"}
         alt="Terrier Pursuit students exploring Boston together"
         fill
         className="participant-hero-photo object-cover"
