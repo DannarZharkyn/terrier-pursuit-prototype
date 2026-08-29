@@ -23,15 +23,16 @@ export function ParticipantShell({
     <ParticipantConsentGate>
       <ParticipantRulesUpdateGate>
       <ParticipantRealtimeSync />
-      <div className="min-h-screen overflow-x-hidden bg-gray-100">
-      <main className="mx-auto min-h-screen max-w-md bg-white pb-28 shadow-soft">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-5">
+      <div className="participant-world min-h-screen overflow-x-hidden">
+      <main className="participant-stage relative mx-auto min-h-screen max-w-md pb-28 shadow-2xl">
+        <header className="sticky top-0 z-20 border-b border-white/15 bg-[#1d1010]/90 px-4 py-4 text-white backdrop-blur-xl sm:px-5">
           <Logo href="/participant/home" />
-          <h1 className="mt-4 text-2xl font-black leading-tight text-gray-950">{title}</h1>
+          <p className="mt-4 text-[10px] font-black uppercase tracking-[0.22em] text-red-200">Terrier field journal</p>
+          <h1 className="hunt-display mt-1 text-3xl uppercase leading-none text-white">{title}</h1>
         </header>
-        <section className="px-4 py-5 sm:px-5 sm:py-6">{children}</section>
+        <section className="relative z-10 px-4 py-5 sm:px-5 sm:py-6">{children}</section>
       </main>
-      <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]" aria-label="Participant navigation">
+      <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-white/15 bg-[#1d1010]/95 text-white shadow-[0_-12px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)]" aria-label="Participant navigation">
         <div className="grid grid-cols-4">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -39,7 +40,7 @@ export function ParticipantShell({
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex min-h-14 flex-col items-center justify-center gap-1 px-1 py-2 text-xs font-semibold text-gray-600 transition hover:text-bu-red"
+                className="flex min-h-14 flex-col items-center justify-center gap-1 px-1 py-2 text-xs font-bold text-white/70 transition hover:-translate-y-0.5 hover:text-white"
               >
                 <Icon className="h-5 w-5" />
                 {tab.label}

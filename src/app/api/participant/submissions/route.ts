@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { normalizeLegacyPunctuation } from "@/lib/text/normalize-legacy-punctuation";
+import { hasEventStarted } from "@/lib/events/start-state";
 
 const bucketName = "game-submissions";
 const maxFileSize = 10 * 1024 * 1024;
@@ -32,6 +33,16 @@ export async function GET(request: Request) {
 
   if (!context.ok) {
     return json({ ok: false, error: context.error }, context.status);
+  }
+
+  if (!hasEventStarted(context.startsAt)) {
+    return json({
+      ok: true,
+      locked: true,
+      startsAt: context.startsAt,
+      submitted: false,
+      locations: [],
+    });
   }
 
   const submission = await supabase
@@ -131,6 +142,10 @@ export async function POST(request: Request) {
 
   if (!context.ok) {
     return json({ ok: false, error: context.error }, context.status);
+  }
+
+  if (!hasEventStarted(context.startsAt)) {
+    return json({ ok: false, error: "Clues and photo uploads unlock when the game starts." }, 403);
   }
 
   if (new Date(context.deadline).getTime() <= Date.now()) {
@@ -355,7 +370,7 @@ async function getSubmissionContext(
 ) {
   const membership = await supabase
     .from("team_memberships")
-    .select("teams!inner(event_id, events!inner(submission_deadline))")
+    .select("teams!inner(event_id, events!inner(starts_at, submission_deadline))")
     .eq("team_id", teamId)
     .eq("participant_id", participantId)
     .maybeSingle();
@@ -366,12 +381,13 @@ async function getSubmissionContext(
 
   const teams = membership.data.teams as unknown as {
     event_id: string;
-    events: { submission_deadline: string };
+    events: { starts_at: string; submission_deadline: string };
   };
 
   return {
     ok: true as const,
     eventId: teams.event_id,
+    startsAt: teams.events.starts_at,
     deadline: teams.events.submission_deadline,
   };
 }

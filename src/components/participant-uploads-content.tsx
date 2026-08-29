@@ -27,6 +27,8 @@ type ClueUpload = {
 
 type SubmissionResponse = {
   ok: boolean;
+  locked?: boolean;
+  startsAt?: string;
   submitted?: boolean;
   locations?: ClueUpload[];
   error?: string;
@@ -39,6 +41,7 @@ export function ParticipantUploadsContent() {
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
   const [savingLocationId, setSavingLocationId] = useState<string>();
   const [submitted, setSubmitted] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [message, setMessage] = useState<string>();
@@ -92,6 +95,7 @@ export function ParticipantUploadsContent() {
       }
 
       setLocations(result.locations ?? []);
+      setLockedUntil(result.locked ? result.startsAt : undefined);
       setSubmitted(Boolean(result.submitted));
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Could not load the team folder.");
@@ -259,7 +263,16 @@ export function ParticipantUploadsContent() {
         </section>
 
         {team ? (
-          submitted ? (
+          lockedUntil ? (
+            <section className="hunt-glass-card relative overflow-hidden p-6 text-center">
+              <div className="mystery-radar mx-auto" aria-hidden="true" />
+              <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-bu-red">Case sealed</p>
+              <h2 className="mt-2 text-2xl font-black text-gray-950">Photo missions unlock at game time</h2>
+              <p className="mt-3 text-sm leading-6 text-gray-600">
+                To keep the hunt fair, clue text and upload slots are protected on the server until {formatBostonDateTime(lockedUntil)}.
+              </p>
+            </section>
+          ) : submitted ? (
             <section className="card p-6 text-center">
               <CheckCircle2 className="mx-auto h-14 w-14 text-bu-red" />
               <h2 className="mt-5 text-2xl font-black text-gray-950">

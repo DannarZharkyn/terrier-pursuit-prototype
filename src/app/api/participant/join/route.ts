@@ -5,6 +5,7 @@ import { getDataEnvironment } from "@/lib/data-environment";
 import { validateParticipantJoinRequest } from "@/lib/participant-join/validation";
 import type { ParticipantJoinResponse } from "@/lib/participant-join/types";
 import { normalizeLegacyPunctuation } from "@/lib/text/normalize-legacy-punctuation";
+import { hasEventStarted } from "@/lib/events/start-state";
 
 type EventRow = {
   id: string;
@@ -145,7 +146,9 @@ export async function POST(request: Request) {
 
     participant = insertedParticipant as ParticipantRow;
   }
-  const locationResult = await getCachedEventClues(event.id);
+  const locationResult = hasEventStarted(event.starts_at)
+    ? await getCachedEventClues(event.id)
+    : { locations: [] as EventLocationRow[], error: undefined };
 
   if (locationResult.error) {
     return json({ ok: false, error: locationResult.error }, 500);

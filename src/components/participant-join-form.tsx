@@ -59,7 +59,7 @@ export function ParticipantJoinForm({ initialGameCode = "" }: ParticipantJoinFor
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="hunt-glass-card p-5" onSubmit={handleSubmit}>
       <div className="space-y-4">
         <label className="block">
           <span className="label">First Name</span>

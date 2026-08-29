@@ -27,14 +27,17 @@ export default async function ParticipantWelcomePage({
   const invalidEventLink = Boolean(normalizedCode && !validCode);
 
   return (
-    <main className="min-h-screen bg-gray-100">
-      <section className="mx-auto min-h-screen max-w-md bg-white shadow-soft">
+    <main className="participant-world min-h-screen">
+      <section className="mx-auto min-h-screen max-w-md overflow-hidden bg-[#f4ede1] shadow-2xl">
         <ParticipantStoryHero />
-        <div className="px-5 py-8">
+        <div className="relative px-5 pb-10 pt-8">
+        <div className="absolute inset-0 participant-paper-texture opacity-50" />
+        <div className="relative">
         <div className="mb-8">
           <Logo href="/participant/welcome" />
-          <h1 className="mt-8 text-3xl font-black text-gray-950">
-            Join the Event
+          <p className="mt-8 text-xs font-black uppercase tracking-[0.22em] text-bu-red">Your mission begins here</p>
+          <h1 className="hunt-display mt-2 text-4xl uppercase leading-none text-gray-950">
+            Enter the hunt
           </h1>
           <p className="mt-2 text-sm leading-6 text-gray-600">
             Enter your details and event code to join your event.
@@ -51,6 +54,7 @@ export default async function ParticipantWelcomePage({
           ) : null}
         </div>
         <ParticipantJoinForm initialGameCode={validCode} />
+        </div>
         </div>
       </section>
     </main>
