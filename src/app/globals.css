@@ -36,7 +36,7 @@ body {
 .participant-stage {
   background:
     linear-gradient(rgba(244, 237, 225, 0.93), rgba(244, 237, 225, 0.96)),
-    url("/images/participant-stories/adventure-team.jpg") center / cover fixed;
+    url("/images/participant-stories/old-north-church.jpg") center / cover fixed;
 }
 
 .participant-stage::before {
@@ -69,6 +69,134 @@ body {
 
 .participant-hero-photo {
   animation: hero-breathe 14s ease-in-out infinite alternate;
+}
+
+.participant-hero-shade {
+  background:
+    linear-gradient(90deg, rgba(22, 12, 12, 0.82) 0%, rgba(35, 14, 14, 0.5) 58%, rgba(22, 12, 12, 0.12) 100%),
+    linear-gradient(to top, rgba(22, 12, 12, 0.7) 0%, rgba(35, 14, 14, 0.3) 44%, rgba(22, 12, 12, 0.04) 78%);
+}
+
+.participant-hero-copy {
+  bottom: 4.75rem;
+}
+
+.participant-hero-compact .participant-hero-photo {
+  object-position: 52% center;
+}
+
+.participant-hero-compact .participant-hero-shade {
+  background: linear-gradient(90deg, rgba(22, 12, 12, 0.94) 0%, rgba(31, 14, 14, 0.68) 58%, rgba(22, 12, 12, 0.22) 100%);
+}
+
+.participant-hero-compact .participant-hero-copy {
+  bottom: 0;
+}
+
+.participant-route-art {
+  position: absolute;
+  z-index: 1;
+  width: 5.5rem;
+  height: 9rem;
+  pointer-events: none;
+  color: rgba(115, 61, 36, 0.28);
+}
+
+.participant-route-art::before,
+.participant-route-art::after {
+  content: "";
+  position: absolute;
+  border-color: currentColor;
+}
+
+.participant-route-art::before {
+  inset: 0;
+  border: 1px dashed currentColor;
+  border-radius: 52% 48% 46% 54%;
+  transform: rotate(24deg);
+}
+
+.participant-route-art::after {
+  width: 3.75rem;
+  height: 3.75rem;
+  border: 1px solid currentColor;
+  border-radius: 9999px;
+}
+
+.participant-route-art-left {
+  left: -2.25rem;
+  top: 27rem;
+}
+
+.participant-route-art-left::after {
+  left: 1.5rem;
+  top: 2rem;
+}
+
+.participant-route-art-right {
+  right: -2.5rem;
+  top: 47rem;
+  transform: rotate(-16deg);
+}
+
+.participant-route-art-right::after {
+  left: 0.4rem;
+  top: 1rem;
+  box-shadow: inset 0 0 0 5px rgba(244, 237, 225, 0.45);
+}
+
+.participant-route-dot {
+  position: absolute;
+  left: 2.7rem;
+  top: 3.25rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid rgba(151, 18, 24, 0.5);
+  border-radius: 9999px;
+  background: #f4ede1;
+}
+
+.participant-route-label {
+  position: absolute;
+  left: 1rem;
+  bottom: -1rem;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+}
+
+.participant-route-compass {
+  position: absolute;
+  left: 1.8rem;
+  top: 2.3rem;
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+@media (max-width: 420px) {
+  .participant-hero-welcome {
+    min-height: 35rem;
+  }
+
+  .participant-hero-welcome .participant-hero-photo {
+    object-position: 53% center;
+  }
+
+  .participant-hero-welcome .participant-hero-copy {
+    bottom: 5.75rem;
+  }
+
+  .participant-hero-welcome .detective-terrier {
+    right: -3rem;
+    height: 15rem;
+  }
+
+  .participant-hero-compact .detective-terrier {
+    right: -2rem;
+    height: 10.5rem;
+  }
 }
 
 .detective-terrier {

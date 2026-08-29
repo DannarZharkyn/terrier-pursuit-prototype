@@ -25,6 +25,14 @@ export function ParticipantShell({
       <ParticipantRealtimeSync />
       <div className="participant-world min-h-screen overflow-x-hidden">
       <main className="participant-stage relative mx-auto min-h-screen max-w-md pb-28 shadow-2xl">
+        <div className="participant-route-art participant-route-art-left" aria-hidden="true">
+          <span className="participant-route-dot" />
+          <span className="participant-route-label">42.3601° N</span>
+        </div>
+        <div className="participant-route-art participant-route-art-right" aria-hidden="true">
+          <span className="participant-route-compass">N</span>
+          <span className="participant-route-label">BOSTON</span>
+        </div>
         <header className="sticky top-0 z-20 border-b border-white/15 bg-[#1d1010]/90 px-4 py-4 text-white backdrop-blur-xl sm:px-5">
           <Logo href="/participant/home" />
           <p className="mt-4 text-[10px] font-black uppercase tracking-[0.22em] text-red-200">Terrier field journal</p>
