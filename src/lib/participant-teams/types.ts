@@ -32,6 +32,7 @@ export type TeamMember = {
   firstName: string;
   lastName: string;
   email: string;
+  role: "leader" | "participant" | null;
 };
 
 export type ParticipantTeam = {

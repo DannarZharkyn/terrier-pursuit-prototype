@@ -154,8 +154,15 @@ export function ParticipantTeamCard({
         <ul className="mt-3 space-y-2">
           {members.map((member) => (
             <li key={member.id} className="flex items-center justify-between gap-3 text-sm font-semibold text-gray-700">
-              <span>
-                {member.firstName} {member.lastName}
+              <span className="min-w-0">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span>{member.firstName} {member.lastName}</span>
+                  {member.role === "leader" ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-800">
+                      Leader{member.id === currentParticipantId ? " — You" : ""}
+                    </span>
+                  ) : null}
+                </span>
                 <span className="block text-xs font-medium text-gray-500">
                   {member.email}
                 </span>
