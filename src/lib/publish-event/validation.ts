@@ -79,6 +79,9 @@ export function validatePublishEventRequest(body: unknown): {
     const rowLabel = `Participant ${index + 1}`;
     const value = isRecord(participant) ? participant : {};
     const normalizedEmail = stringValue(value.normalizedEmail).trim().toLowerCase();
+    const roleValue = stringValue(value.role).trim().toLowerCase();
+    const role: "leader" | "participant" | null =
+      roleValue === "leader" || roleValue === "participant" ? roleValue : null;
 
     if (!stringValue(value.firstName).trim()) {
       errors.push(`${rowLabel}: firstName is required.`);
@@ -100,6 +103,10 @@ export function validatePublishEventRequest(body: unknown): {
       errors.push(`${rowLabel}: normalizedEmail must be a valid email address.`);
     }
 
+    if (roleValue && !role) {
+      errors.push(`${rowLabel}: role must be leader, participant, or blank.`);
+    }
+
     return {
       firstName: collapseWhitespace(stringValue(value.firstName)),
       lastName: collapseWhitespace(stringValue(value.lastName)),
@@ -107,6 +114,7 @@ export function validatePublishEventRequest(body: unknown): {
       normalizedFirstName: collapseWhitespace(stringValue(value.normalizedFirstName)).toLowerCase(),
       normalizedLastName: collapseWhitespace(stringValue(value.normalizedLastName)).toLowerCase(),
       normalizedEmail,
+      role,
     };
   });
 

@@ -1,12 +1,15 @@
 import * as XLSX from "xlsx";
 
-export type ParticipantImportField = "First Name" | "Last Name" | "Email" | "Header";
+export type ParticipantImportField = "First Name" | "Last Name" | "Email" | "Role" | "Header";
+
+export type ParticipantRole = "leader" | "participant";
 
 export type ParticipantImportErrorCode =
   | "missing_required_column"
   | "duplicate_column"
   | "missing_required_value"
   | "invalid_email"
+  | "invalid_role"
   | "duplicate_email";
 
 export type ParticipantImportError = {
@@ -24,6 +27,7 @@ export type ParsedParticipant = {
   normalizedFirstName: string;
   normalizedLastName: string;
   normalizedEmail: string;
+  role?: ParticipantRole;
 };
 
 export type ParticipantImportSummary = {
@@ -37,6 +41,8 @@ export type ParticipantImportResult =
       ok: true;
       participants: ParsedParticipant[];
       summary: ParticipantImportSummary;
+      roleSummary: ParticipantRoleSummary;
+      warnings: string[];
     }
   | {
       ok: false;
@@ -45,6 +51,13 @@ export type ParticipantImportResult =
     };
 
 const requiredHeaders = ["First Name", "Last Name", "Email"] as const;
+
+export type ParticipantRoleSummary = {
+  hasRoleColumn: boolean;
+  leaders: number;
+  participants: number;
+  unspecified: number;
+};
 
 type RequiredHeader = (typeof requiredHeaders)[number];
 
@@ -102,6 +115,7 @@ export function parseParticipantImportFile(
   }
 
   const headerIndexes = headerResult.indexes;
+  const roleIndex = headerResult.roleIndex;
   const participants: ParsedParticipant[] = [];
   const errors: ParticipantImportError[] = [];
   const seenEmails = new Map<string, number>();
@@ -117,6 +131,12 @@ export function parseParticipantImportFile(
     const lastName = normalizeDisplayValue(row[headerIndexes["Last Name"]]);
     const email = normalizeEmailDisplayValue(row[headerIndexes.Email]);
     const normalizedEmail = email.toLowerCase();
+    const roleValue = roleIndex === undefined
+      ? ""
+      : normalizeDisplayValue(row[roleIndex]).toLowerCase();
+    const role = roleValue === "leader" || roleValue === "participant"
+      ? roleValue
+      : undefined;
 
     if (!firstName) {
       errors.push(requiredValueError(rowNumber, "First Name"));
@@ -150,6 +170,15 @@ export function parseParticipantImportFile(
       }
     }
 
+    if (roleValue && !role) {
+      errors.push({
+        rowNumber,
+        field: "Role",
+        code: "invalid_role",
+        message: `Row ${rowNumber}: Role must be leader, participant, or blank.`,
+      });
+    }
+
     participants.push({
       rowNumber,
       firstName,
@@ -158,6 +187,7 @@ export function parseParticipantImportFile(
       normalizedFirstName: firstName.toLowerCase(),
       normalizedLastName: lastName.toLowerCase(),
       normalizedEmail,
+      ...(role ? { role } : {}),
     });
   });
 
@@ -176,11 +206,19 @@ export function parseParticipantImportFile(
       ...summaryBase,
       importedRows: participants.length,
     },
+    roleSummary: {
+      hasRoleColumn: roleIndex !== undefined,
+      leaders: participants.filter((participant) => participant.role === "leader").length,
+      participants: participants.filter((participant) => participant.role === "participant").length,
+      unspecified: participants.filter((participant) => !participant.role).length,
+    },
+    warnings: participantRoleWarnings(participants, roleIndex !== undefined),
   };
 }
 
 function readHeaderIndexes(headerRow: unknown[]): {
   indexes?: HeaderIndexes;
+  roleIndex?: number;
   errors: ParticipantImportError[];
 } {
   const errors: ParticipantImportError[] = [];
@@ -224,8 +262,25 @@ function readHeaderIndexes(headerRow: unknown[]): {
 
   return {
     indexes: errors.length === 0 ? indexes : undefined,
+    roleIndex: normalizedHeaders.indexOf(normalizeHeaderValue("Role")) >= 0
+      ? normalizedHeaders.indexOf(normalizeHeaderValue("Role"))
+      : undefined,
     errors,
   };
+}
+
+function participantRoleWarnings(participants: ParsedParticipant[], hasRoleColumn: boolean) {
+  if (!hasRoleColumn) {
+    return [
+      "No Role column was found. The list can still be uploaded, but leader-balanced assignment will not be available for these participants.",
+    ];
+  }
+
+  const unspecified = participants.filter((participant) => !participant.role).length;
+
+  return unspecified > 0
+    ? [`${unspecified} participant${unspecified === 1 ? " has" : "s have"} no role. They can still be assigned randomly.`]
+    : [];
 }
 
 function failure(errors: ParticipantImportError[]): ParticipantImportResult {

@@ -13,6 +13,7 @@ export type PublishEventRequest = {
     normalizedFirstName: string;
     normalizedLastName: string;
     normalizedEmail: string;
+    role: "leader" | "participant" | null;
   }[];
   locations: {
     position: number;

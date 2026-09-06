@@ -1,12 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { CheckCircle2, PlusCircle, Trash2, UserPlus, Users, XCircle } from "lucide-react";
+import { CheckCircle2, PlusCircle, Shuffle, Sparkles, Trash2, UserPlus, Users, XCircle } from "lucide-react";
 
 export type UnassignedStudent = {
   id: string;
   name: string;
   email: string;
+  role: "leader" | "participant" | null;
 };
 
 export type AvailableTeam = {
@@ -36,7 +37,52 @@ export function UnassignedStudentsContent({
   const [removingParticipantId, setRemovingParticipantId] = useState<string>();
   const [success, setSuccess] = useState<string>();
   const [error, setError] = useState<string>();
+  const [assignmentMode, setAssignmentMode] = useState<"random" | "role_balanced">("random");
+  const [targetTeamSize, setTargetTeamSize] = useState(5);
+  const [isAutoAssigning, setIsAutoAssigning] = useState(false);
   const selectedStudent = students.find((student) => student.id === selectedStudentId);
+  const leaderCount = students.filter((student) => student.role === "leader").length;
+  const specifiedParticipantCount = students.filter((student) => student.role === "participant").length;
+  const unspecifiedRoleCount = students.filter((student) => !student.role).length;
+
+  async function automaticallyAssign() {
+    if (!students.length) return;
+    const modeDescription = assignmentMode === "role_balanced"
+      ? `create or reuse one empty team for each of the ${leaderCount} leaders and distribute everyone else evenly`
+      : `randomly distribute ${students.length} participants into balanced teams of about ${targetTeamSize}`;
+
+    if (!window.confirm(`Automatically ${modeDescription}? Existing team memberships will not be changed.`)) return;
+
+    setIsAutoAssigning(true);
+    setSuccess(undefined);
+    setError(undefined);
+
+    try {
+      const response = await fetch("/api/organizer/team-assignments/automatic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, mode: assignmentMode, targetTeamSize }),
+      });
+      const result = await response.json() as {
+        ok: boolean;
+        error?: string;
+        assignedCount?: number;
+        teamsCreated?: number;
+      };
+
+      if (!result.ok) {
+        setError(result.error ?? "Could not assign teams automatically.");
+        return;
+      }
+
+      setSuccess(`${result.assignedCount} participants were assigned. ${result.teamsCreated} teams were created.`);
+      window.setTimeout(() => window.location.reload(), 700);
+    } catch {
+      setError("Could not reach the automatic assignment service. Please try again.");
+    } finally {
+      setIsAutoAssigning(false);
+    }
+  }
 
   async function createTeam(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -183,6 +229,36 @@ export function UnassignedStudentsContent({
         </div>
       ) : null}
 
+      <section className="card mb-6 overflow-hidden border-bu-red/20">
+        <div className="border-b border-gray-200 bg-bu-soft px-5 py-4">
+          <div className="flex items-center gap-2 text-bu-red"><Sparkles className="h-5 w-5" /><h2 className="text-lg font-black text-gray-950">Automatic Team Assignment</h2></div>
+          <p className="mt-1 text-sm leading-6 text-gray-600">Assign the entire waiting list at once. Existing team memberships stay unchanged.</p>
+        </div>
+        <div className="grid gap-5 p-5 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+          <label className={`block rounded-lg border p-4 ${assignmentMode === "random" ? "border-bu-red bg-red-50" : "border-gray-200 bg-white"}`}>
+            <span className="flex items-start gap-3">
+              <input className="mt-1 accent-red-600" type="radio" name="assignment-mode" checked={assignmentMode === "random"} onChange={() => setAssignmentMode("random")} />
+              <span><span className="block font-black text-gray-950">Random and balanced</span><span className="mt-1 block text-sm leading-5 text-gray-600">Shuffle everyone and keep team sizes as even as possible.</span></span>
+            </span>
+          </label>
+          <label className={`block rounded-lg border p-4 ${assignmentMode === "role_balanced" ? "border-bu-red bg-red-50" : "border-gray-200 bg-white"} ${leaderCount === 0 ? "opacity-55" : ""}`}>
+            <span className="flex items-start gap-3">
+              <input className="mt-1 accent-red-600" type="radio" name="assignment-mode" checked={assignmentMode === "role_balanced"} disabled={leaderCount === 0} onChange={() => setAssignmentMode("role_balanced")} />
+              <span><span className="block font-black text-gray-950">Balance by role</span><span className="mt-1 block text-sm leading-5 text-gray-600">Give each leader a team, then spread participants evenly.</span></span>
+            </span>
+          </label>
+          <div className="min-w-44">
+            <label className="block"><span className="label">Target team size <span className="normal-case text-gray-500">(random mode)</span></span><input className="field mt-2 disabled:bg-gray-100 disabled:text-gray-400" type="number" min={2} max={20} value={targetTeamSize} disabled={assignmentMode === "role_balanced"} onChange={(event) => setTargetTeamSize(Number(event.target.value))} /></label>
+            <button className="btn-primary mt-3 w-full" type="button" disabled={!students.length || isAutoAssigning || (assignmentMode === "role_balanced" && leaderCount === 0)} onClick={automaticallyAssign}>
+              <Shuffle className="h-4 w-4" />{isAutoAssigning ? "Assigning..." : "Assign Everyone"}
+            </button>
+          </div>
+        </div>
+        <div className="grid gap-2 border-t border-gray-100 bg-gray-50 px-5 py-3 text-sm text-gray-700 sm:grid-cols-4">
+          <p><strong>{students.length}</strong> waiting</p><p><strong>{leaderCount}</strong> leaders</p><p><strong>{specifiedParticipantCount}</strong> participants</p><p><strong>{unspecifiedRoleCount}</strong> unspecified</p>
+        </div>
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <div className="card overflow-hidden">
           <div className="border-b border-gray-200 bg-gray-50 px-5 py-4">
@@ -200,6 +276,7 @@ export function UnassignedStudentsContent({
                 <div className="min-w-0">
                   <p className="font-bold text-gray-950">{student.name}</p>
                   <p className="mt-1 text-sm text-gray-600">{student.email}</p>
+                  <RolePill role={student.role} />
                 </div>
               </button>
             )) : (
@@ -266,7 +343,7 @@ export function UnassignedStudentsContent({
                       <ul className="mt-1 space-y-0.5 text-xs font-medium text-gray-700">
                         {team.members.map((member) => (
                           <li key={member.id} className="flex min-h-7 items-center justify-between gap-2">
-                            <span className="min-w-0 truncate">{member.name}</span>
+                            <span className="min-w-0"><span className="block truncate">{member.name}</span><RolePill role={member.role} compact /></span>
                             <button
                               className="rounded p-1 text-gray-400 transition hover:bg-red-100 hover:text-bu-red disabled:cursor-not-allowed disabled:opacity-50"
                               type="button"
@@ -300,5 +377,13 @@ export function UnassignedStudentsContent({
         </section>
       </section>
     </>
+  );
+}
+
+function RolePill({ role, compact = false }: { role: UnassignedStudent["role"]; compact?: boolean }) {
+  return (
+    <span className={`${compact ? "mt-0.5" : "mt-2"} inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${role === "leader" ? "bg-amber-100 text-amber-800" : role === "participant" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-600"}`}>
+      {role ?? "Unspecified role"}
+    </span>
   );
 }

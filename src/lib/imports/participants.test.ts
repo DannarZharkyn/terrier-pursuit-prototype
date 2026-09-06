@@ -32,6 +32,49 @@ describe("parseParticipantImportFile", () => {
       normalizedLastName: "van buren",
       normalizedEmail: "jane.doe@bu.edu",
     });
+    assert.equal(result.roleSummary.hasRoleColumn, false);
+    assert.equal(result.warnings.length, 1);
+  });
+
+  it("parses optional leader and participant roles case-insensitively", () => {
+    const result = parseParticipantImportFile(
+      makeWorkbookBuffer([
+        ["First Name", "Last Name", "Email", "Role"],
+        ["Avery", "Leader", "avery@bu.edu", " Leader "],
+        ["Parker", "Player", "parker@bu.edu", "PARTICIPANT"],
+        ["Taylor", "Unspecified", "taylor@bu.edu", ""],
+      ]),
+    );
+
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+
+    assert.deepEqual(result.participants.map((participant) => participant.role), [
+      "leader",
+      "participant",
+      undefined,
+    ]);
+    assert.deepEqual(result.roleSummary, {
+      hasRoleColumn: true,
+      leaders: 1,
+      participants: 1,
+      unspecified: 1,
+    });
+    assert.deepEqual(result.warnings, ["1 participant has no role. They can still be assigned randomly."]);
+  });
+
+  it("rejects unsupported role values", () => {
+    const result = parseParticipantImportFile(
+      makeWorkbookBuffer([
+        ["First Name", "Last Name", "Email", "Role"],
+        ["Morgan", "Guide", "morgan@bu.edu", "captain"],
+      ]),
+    );
+
+    assert.equal(result.ok, false);
+    if (result.ok) return;
+    assert.equal(result.errors[0].code, "invalid_role");
+    assert.equal(result.errors[0].message, "Row 2: Role must be leader, participant, or blank.");
   });
 
   it("allows extra columns and ignores them", () => {

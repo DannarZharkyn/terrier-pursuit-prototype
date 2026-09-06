@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, useRef, useState } from "react";
-import { CheckCircle2, Upload, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Upload, XCircle } from "lucide-react";
 import {
   parseParticipantImportFile,
   type ParticipantImportResult,
@@ -55,7 +55,7 @@ export function ParticipantListUpload({
               Upload Participant Email List (.csv/.xlsx)
             </p>
             <p className="text-sm text-gray-500">
-              {fileName ? fileName : "Click to browse for First Name, Last Name, Email"}
+              {fileName ? fileName : "Click to browse for First Name, Last Name, Email, and optional Role"}
             </p>
           </div>
         </div>
@@ -94,6 +94,23 @@ export function ParticipantListUpload({
               <dd>0</dd>
             </div>
           </dl>
+          <dl className="mt-3 grid gap-2 border-t border-green-200 pt-3 text-sm text-green-900 sm:grid-cols-3">
+            <div><dt className="font-semibold">Leaders</dt><dd>{result.roleSummary.leaders}</dd></div>
+            <div><dt className="font-semibold">Participants</dt><dd>{result.roleSummary.participants}</dd></div>
+            <div><dt className="font-semibold">Role unspecified</dt><dd>{result.roleSummary.unspecified}</dd></div>
+          </dl>
+        </div>
+      ) : null}
+
+      {result?.ok && result.warnings.length ? (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p className="font-bold">Role information is optional</p>
+              {result.warnings.map((warning) => <p className="mt-1 leading-5" key={warning}>{warning}</p>)}
+            </div>
+          </div>
         </div>
       ) : null}
 

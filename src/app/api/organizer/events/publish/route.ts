@@ -53,6 +53,7 @@ export async function POST(request: Request) {
       normalized_first_name: participant.normalizedFirstName,
       normalized_last_name: participant.normalizedLastName,
       normalized_email: participant.normalizedEmail,
+      registration_role: participant.role,
     }));
 
     const participantInsert = await supabase.from("participants").insert(participantRows);

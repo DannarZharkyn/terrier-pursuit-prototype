@@ -18,6 +18,7 @@ type ParticipantRow = {
   first_name: string;
   last_name: string;
   email: string;
+  registration_role: "leader" | "participant" | null;
 };
 
 type TeamRow = {
@@ -61,7 +62,7 @@ async function getUnassignedPageData(eventId: string) {
   const supabase = createSupabaseAdminClient();
   const participants = await supabase
     .from("participants")
-    .select("id, first_name, last_name, email")
+    .select("id, first_name, last_name, email, registration_role")
     .eq("event_id", eventId)
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
@@ -95,7 +96,12 @@ async function getUnassignedPageData(eventId: string) {
   const membershipRows = (memberships.data ?? []) as unknown as TeamMembershipRow[];
   const participantRows = (participants.data ?? []) as unknown as ParticipantRow[];
   const participantById = new Map(participantRows.map((participant) => [participant.id, participant]));
-  const membersByTeamId = new Map<string, { id: string; name: string; email: string }[]>();
+  const membersByTeamId = new Map<string, {
+    id: string;
+    name: string;
+    email: string;
+    role: "leader" | "participant" | null;
+  }[]>();
   const assignedParticipantIds = new Set<string>();
 
   for (const membership of membershipRows) {
@@ -109,6 +115,7 @@ async function getUnassignedPageData(eventId: string) {
           id: participant.id,
           name: `${participant.first_name} ${participant.last_name}`,
           email: participant.email,
+          role: participant.registration_role,
         },
       ]);
     }
@@ -121,6 +128,7 @@ async function getUnassignedPageData(eventId: string) {
         id: participant.id,
         name: `${participant.first_name} ${participant.last_name}`,
         email: participant.email,
+        role: participant.registration_role,
       })),
     teams: ((teams ?? []) as unknown as TeamRow[]).map((team) => ({
       id: team.id,
