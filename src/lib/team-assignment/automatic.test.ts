@@ -82,6 +82,22 @@ describe("planAutomaticAssignments", () => {
     }), /1 more leader/);
   });
 
+  it("requires extra leaders to be undesignated before role-balanced assignment", () => {
+    assert.throws(() => planAutomaticAssignments({
+      participants: [
+        { id: "l1", role: "leader" },
+        { id: "l2", role: "leader" },
+        { id: "p1", role: "participant" },
+        { id: "p2", role: "participant" },
+        { id: "p3", role: "participant" },
+      ],
+      teams: [],
+      mode: "role_balanced",
+      targetTeamSize: 5,
+      random: fixedRandom,
+    }), /1 extra leader/);
+  });
+
   it("supplements preferred leaders with organizer-designated leaders", () => {
     const plan = planAutomaticAssignments({
       participants: [

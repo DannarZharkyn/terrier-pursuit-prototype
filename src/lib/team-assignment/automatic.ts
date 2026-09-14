@@ -95,6 +95,13 @@ function planByRole(
     );
   }
 
+  if (coordinators.length > desiredTeamCount) {
+    const surplus = coordinators.length - desiredTeamCount;
+    throw new Error(
+      `Role-balanced assignment has ${surplus} extra leader${surplus === 1 ? "" : "s"}. Remove the extra leader designation${surplus === 1 ? "" : "s"} before assigning.`,
+    );
+  }
+
   const emptyTeams = shuffle(teams.filter((team) => team.memberCount === 0), random);
   const newTeams = makeNewTeams(
     Math.max(0, desiredTeamCount - emptyTeams.length),

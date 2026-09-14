@@ -50,6 +50,7 @@ export function UnassignedStudentsContent({
   const targetTeamSizeValid = Number.isInteger(targetTeamSize) && targetTeamSize >= 2 && targetTeamSize <= 20;
   const requiredTeamCount = students.length && targetTeamSizeValid ? Math.ceil(students.length / targetTeamSize) : 0;
   const contactShortage = Math.max(0, requiredTeamCount - coordinatorCount);
+  const leaderSurplus = Math.max(0, coordinatorCount - requiredTeamCount);
   const otherParticipantCount = students.length - coordinatorCount;
   const assignedParticipantCount = teams.reduce((total, team) => total + team.memberCount, 0);
 
@@ -328,7 +329,7 @@ export function UnassignedStudentsContent({
           </label>
           <div className="min-w-44">
             <label className="block"><span className="label">Target team size</span><input className="field mt-2" type="number" min={2} max={20} value={targetTeamSize} onChange={(event) => setTargetTeamSize(Number(event.target.value))} /></label>
-            <button className="btn-primary mt-3 w-full" type="button" disabled={!students.length || !targetTeamSizeValid || isAutoAssigning || isResetting || (assignmentMode === "role_balanced" && contactShortage > 0)} onClick={automaticallyAssign}>
+            <button className="btn-primary mt-3 w-full" type="button" disabled={!students.length || !targetTeamSizeValid || isAutoAssigning || isResetting || (assignmentMode === "role_balanced" && (contactShortage > 0 || leaderSurplus > 0))} onClick={automaticallyAssign}>
               <Shuffle className="h-4 w-4" />{isAutoAssigning ? "Assigning..." : "Assign Everyone"}
             </button>
             <button className="btn-secondary mt-2 w-full border-red-200 text-red-700 hover:bg-red-50" type="button" disabled={!assignedParticipantCount || isAutoAssigning || isResetting} onClick={resetTeamAssignments}>
@@ -337,9 +338,11 @@ export function UnassignedStudentsContent({
           </div>
         </div>
         {assignmentMode === "role_balanced" ? (
-          <div className={`border-t px-5 py-3 text-sm font-semibold ${contactShortage ? "border-amber-200 bg-amber-50 text-amber-900" : "border-green-200 bg-green-50 text-green-900"}`}>
+          <div className={`border-t px-5 py-3 text-sm font-semibold ${contactShortage || leaderSurplus ? "border-amber-200 bg-amber-50 text-amber-900" : "border-green-200 bg-green-50 text-green-900"}`}>
             {contactShortage
               ? `${requiredTeamCount} teams are needed. Designate ${contactShortage} more leader${contactShortage === 1 ? "" : "s"} below before assigning.`
+              : leaderSurplus
+                ? `${requiredTeamCount} teams are needed, but ${coordinatorCount} leaders are selected. Remove ${leaderSurplus} leader designation${leaderSurplus === 1 ? "" : "s"} before assigning.`
               : `${requiredTeamCount} teams are needed, and every team can receive a leader.`}
           </div>
         ) : null}
