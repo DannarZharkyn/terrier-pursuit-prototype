@@ -215,6 +215,81 @@ export async function POST(request: Request) {
   });
 }
 
+export async function PUT(request: Request) {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "Request body must be valid JSON." }, { status: 400 });
+  }
+
+  const teamId = typeof body === "object" && body !== null && "teamId" in body
+    ? String(body.teamId).trim()
+    : "";
+  const validation = validateCreateTeamRequest(body);
+
+  if (!isUuid(teamId) || !validation.data) {
+    return NextResponse.json({
+      ok: false,
+      error: "Please check the team name.",
+      details: [
+        ...(!isUuid(teamId) ? ["Team ID must be a valid UUID."] : []),
+        ...validation.errors,
+      ],
+    }, { status: 400 });
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const participant = await getPublishedEventParticipant(
+    supabase,
+    validation.data.eventId,
+    validation.data.participantId,
+  );
+
+  if (!participant) {
+    return NextResponse.json({ ok: false, error: "We could not find this participant in a published event." }, { status: 404 });
+  }
+
+  const membership = await supabase
+    .from("team_memberships")
+    .select("team_id, teams!inner(event_id)")
+    .eq("team_id", teamId)
+    .eq("participant_id", validation.data.participantId)
+    .eq("teams.event_id", validation.data.eventId)
+    .maybeSingle();
+
+  if (membership.error) {
+    return NextResponse.json({ ok: false, error: membership.error.message }, { status: 500 });
+  }
+  if (!membership.data) {
+    return NextResponse.json({ ok: false, error: "You can only rename your current team." }, { status: 403 });
+  }
+
+  const updatedTeam = await supabase
+    .from("teams")
+    .update({
+      name: validation.data.teamName,
+      normalized_name: validation.data.normalizedTeamName,
+    })
+    .eq("id", teamId)
+    .eq("event_id", validation.data.eventId)
+    .select("id, name")
+    .maybeSingle();
+
+  if (isDuplicateTeamName(updatedTeam.error)) {
+    return NextResponse.json({ ok: false, error: "That team name is already taken for this event." }, { status: 409 });
+  }
+  if (updatedTeam.error) {
+    return NextResponse.json({ ok: false, error: updatedTeam.error.message }, { status: 500 });
+  }
+  if (!updatedTeam.data) {
+    return NextResponse.json({ ok: false, error: "Team not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true, teamId, name: updatedTeam.data.name });
+}
+
 function json(response: CreateTeamResponse, status = 200) {
   return NextResponse.json(response, { status });
 }
@@ -417,6 +492,10 @@ function isDuplicateTeamCode(error: { code?: string; message?: string } | null) 
     (error.message?.includes("teams_event_id_team_code_key") ||
       error.message?.includes("team_code"))
   );
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 function normalizeJoinedTeam(team: TeamMembershipRow["teams"]) {

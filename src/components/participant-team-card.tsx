@@ -2,11 +2,12 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, LogOut, Trash2, Users, X, XCircle } from "lucide-react";
+import { Check, CheckCircle2, LogOut, Pencil, Trash2, Users, X, XCircle } from "lucide-react";
 import type {
   DeleteTeamResponse,
   ParticipantTeam,
   RemoveTeamMemberResponse,
+  RenameTeamResponse,
   TeamMember,
 } from "@/lib/participant-teams/types";
 import { readParticipantSession } from "@/lib/participant-session";
@@ -30,6 +31,15 @@ export function ParticipantTeamCard({
   const [attested, setAttested] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [error, setError] = useState<string>();
+  const [displayName, setDisplayName] = useState(team.name);
+  const [editedName, setEditedName] = useState(team.name);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  useEffect(() => {
+    setDisplayName(team.name);
+    setEditedName(team.name);
+  }, [team.name]);
 
   useEffect(() => {
     setCurrentParticipantId(readParticipantSession()?.participant.id);
@@ -43,7 +53,7 @@ export function ParticipantTeamCard({
       return;
     }
 
-    if (!window.confirm(`Leave ${team.name}? You will become unassigned.`)) {
+    if (!window.confirm(`Leave ${displayName}? You will become unassigned.`)) {
       return;
     }
 
@@ -69,6 +79,47 @@ export function ParticipantTeamCard({
       setError("Could not leave the team. Please try again.");
     } finally {
       setIsLeaving(false);
+    }
+  }
+
+  async function renameTeam(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readParticipantSession();
+
+    if (!session) {
+      router.replace("/participant/welcome");
+      return;
+    }
+
+    setIsSavingName(true);
+    setError(undefined);
+
+    try {
+      const response = await fetch("/api/participant/teams", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamId: team.id,
+          eventId: session.event.id,
+          participantId: session.participant.id,
+          teamName: editedName,
+        }),
+      });
+      const result = await response.json() as RenameTeamResponse;
+
+      if (!result.ok) {
+        setError(result.details?.join(" ") || result.error);
+        return;
+      }
+
+      setDisplayName(result.name);
+      setEditedName(result.name);
+      setIsRenaming(false);
+      router.refresh();
+    } catch {
+      setError("Could not rename the team. Please try again.");
+    } finally {
+      setIsSavingName(false);
     }
   }
 
@@ -136,7 +187,43 @@ export function ParticipantTeamCard({
         {statusText}
       </div>
       <p className="mt-4 text-sm font-semibold text-gray-500">Team Name</p>
-      <p className="mt-1 text-xl font-black text-gray-950">{team.name}</p>
+      {isRenaming ? (
+        <form className="mt-2 flex flex-col gap-2 sm:flex-row" onSubmit={renameTeam}>
+          <input
+            className="field min-w-0 flex-1"
+            value={editedName}
+            onChange={(event) => setEditedName(event.target.value)}
+            maxLength={80}
+            required
+            autoFocus
+            aria-label="New team name"
+          />
+          <div className="flex gap-2">
+            <button className="btn-primary flex-1 sm:flex-none" type="submit" disabled={isSavingName || !editedName.trim()}>
+              <Check className="h-4 w-4" />{isSavingName ? "Saving..." : "Save"}
+            </button>
+            <button
+              className="btn-secondary flex-1 sm:flex-none"
+              type="button"
+              disabled={isSavingName}
+              onClick={() => { setEditedName(displayName); setIsRenaming(false); setError(undefined); }}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <p className="min-w-0 break-words text-xl font-black text-gray-950">{displayName}</p>
+          <button
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-bold text-bu-red hover:bg-red-50"
+            type="button"
+            onClick={() => { setEditedName(displayName); setIsRenaming(true); setError(undefined); }}
+          >
+            <Pencil className="h-3.5 w-3.5" />Rename
+          </button>
+        </div>
+      )}
       <p className="mt-5 text-sm font-semibold text-gray-500">Team Code</p>
       <p className="mt-2 text-3xl font-black tracking-normal text-bu-red">
         {team.teamCode}

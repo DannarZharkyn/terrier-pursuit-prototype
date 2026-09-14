@@ -69,6 +69,12 @@ export type RemoveTeamMemberSuccess = {
   removedParticipantId: string;
 };
 
+export type RenameTeamSuccess = {
+  ok: true;
+  teamId: string;
+  name: string;
+};
+
 export type TeamApiFailure = {
   ok: false;
   error: string;
@@ -84,3 +90,5 @@ export type JoinTeamResponse = JoinTeamSuccess | TeamApiFailure;
 export type DeleteTeamResponse = DeleteTeamSuccess | TeamApiFailure;
 
 export type RemoveTeamMemberResponse = RemoveTeamMemberSuccess | TeamApiFailure;
+
+export type RenameTeamResponse = RenameTeamSuccess | TeamApiFailure;
