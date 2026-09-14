@@ -45,19 +45,18 @@ export function UnassignedStudentsContent({
   const [updatingContactId, setUpdatingContactId] = useState<string>();
   const selectedStudent = students.find((student) => student.id === selectedStudentId);
   const leaderCount = students.filter((student) => student.role === "leader").length;
-  const designatedContactCount = students.filter((student) => student.role !== "leader" && student.isTeamContact).length;
+  const designatedLeaderCount = students.filter((student) => student.role !== "leader" && student.isTeamContact).length;
   const coordinatorCount = students.filter((student) => student.role === "leader" || student.isTeamContact).length;
   const targetTeamSizeValid = Number.isInteger(targetTeamSize) && targetTeamSize >= 2 && targetTeamSize <= 20;
   const requiredTeamCount = students.length && targetTeamSizeValid ? Math.ceil(students.length / targetTeamSize) : 0;
   const contactShortage = Math.max(0, requiredTeamCount - coordinatorCount);
-  const specifiedParticipantCount = students.filter((student) => student.role === "participant").length;
-  const unspecifiedRoleCount = students.filter((student) => !student.role).length;
+  const otherParticipantCount = students.length - coordinatorCount;
   const assignedParticipantCount = teams.reduce((total, team) => total + team.memberCount, 0);
 
   async function automaticallyAssign() {
     if (!students.length) return;
     const modeDescription = assignmentMode === "role_balanced"
-      ? `create ${requiredTeamCount} balanced teams with one preferred leader or designated team contact on each team`
+      ? `create ${requiredTeamCount} balanced teams with one leader on each team`
       : `randomly distribute ${students.length} participants into balanced teams of about ${targetTeamSize}`;
 
     if (!window.confirm(`Automatically ${modeDescription}? Existing team memberships will not be changed.`)) return;
@@ -125,7 +124,7 @@ export function UnassignedStudentsContent({
     }
   }
 
-  async function setTeamContact(student: UnassignedStudent, isTeamContact: boolean) {
+  async function setParticipantLeader(student: UnassignedStudent, isLeader: boolean) {
     setUpdatingContactId(student.id);
     setSuccess(undefined);
     setError(undefined);
@@ -134,27 +133,31 @@ export function UnassignedStudentsContent({
       const response = await fetch("/api/organizer/team-assignments/contacts", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, participantId: student.id, isTeamContact }),
+        body: JSON.stringify({ eventId, participantId: student.id, isLeader }),
       });
       const result = await response.json() as { ok: boolean; error?: string };
 
       if (!result.ok) {
-        setError(result.error ?? "Could not update the team contact.");
+        setError(result.error ?? "Could not update the leader designation.");
         return;
       }
 
       setStudents((current) => current.map((item) =>
-        item.id === student.id ? { ...item, isTeamContact } : item));
+        item.id === student.id
+          ? { ...item, role: isLeader ? item.role : "participant", isTeamContact: isLeader }
+          : item));
       setTeams((current) => current.map((team) => ({
         ...team,
         members: team.members.map((member) =>
-          member.id === student.id ? { ...member, isTeamContact } : member),
+          member.id === student.id
+            ? { ...member, role: isLeader ? member.role : "participant", isTeamContact: isLeader }
+            : member),
       })));
-      setSuccess(isTeamContact
-        ? `${student.name} is now a team contact.`
-        : `${student.name} is no longer a team contact.`);
+      setSuccess(isLeader
+        ? `${student.name} is now designated as a leader.`
+        : `${student.name} is no longer a leader.`);
     } catch {
-      setError("Could not reach the team-contact service. Please try again.");
+      setError("Could not reach the leader-designation service. Please try again.");
     } finally {
       setUpdatingContactId(undefined);
     }
@@ -320,7 +323,7 @@ export function UnassignedStudentsContent({
           <label className={`block rounded-lg border p-4 ${assignmentMode === "role_balanced" ? "border-bu-red bg-red-50" : "border-gray-200 bg-white"}`}>
             <span className="flex items-start gap-3">
               <input className="mt-1 accent-red-600" type="radio" name="assignment-mode" checked={assignmentMode === "role_balanced"} onChange={() => setAssignmentMode("role_balanced")} />
-              <span><span className="block font-black text-gray-950">Balance by role</span><span className="mt-1 block text-sm leading-5 text-gray-600">Create teams at the target size with one preferred leader or organizer-designated contact per team.</span></span>
+              <span><span className="block font-black text-gray-950">Balance by role</span><span className="mt-1 block text-sm leading-5 text-gray-600">Create teams at the target size with one preferred or organizer-designated leader per team.</span></span>
             </span>
           </label>
           <div className="min-w-44">
@@ -336,12 +339,12 @@ export function UnassignedStudentsContent({
         {assignmentMode === "role_balanced" ? (
           <div className={`border-t px-5 py-3 text-sm font-semibold ${contactShortage ? "border-amber-200 bg-amber-50 text-amber-900" : "border-green-200 bg-green-50 text-green-900"}`}>
             {contactShortage
-              ? `${requiredTeamCount} teams are needed. Designate ${contactShortage} more team contact${contactShortage === 1 ? "" : "s"} below before assigning.`
-              : `${requiredTeamCount} teams are needed, and every team can receive a leader or team contact.`}
+              ? `${requiredTeamCount} teams are needed. Designate ${contactShortage} more leader${contactShortage === 1 ? "" : "s"} below before assigning.`
+              : `${requiredTeamCount} teams are needed, and every team can receive a leader.`}
           </div>
         ) : null}
         <div className="grid gap-2 border-t border-gray-100 bg-gray-50 px-5 py-3 text-sm text-gray-700 sm:grid-cols-5">
-          <p><strong>{students.length}</strong> waiting</p><p><strong>{requiredTeamCount}</strong> teams needed</p><p><strong>{leaderCount}</strong> preferred leaders</p><p><strong>{designatedContactCount}</strong> team contacts</p><p><strong>{specifiedParticipantCount + unspecifiedRoleCount}</strong> others</p>
+          <p><strong>{students.length}</strong> waiting</p><p><strong>{requiredTeamCount}</strong> teams needed</p><p><strong>{leaderCount}</strong> preferred leaders</p><p><strong>{designatedLeaderCount}</strong> designated leaders</p><p><strong>{otherParticipantCount}</strong> others</p>
         </div>
       </section>
 
@@ -378,17 +381,15 @@ export function UnassignedStudentsContent({
             {selectedStudent ? (
               <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                 <div><p className="text-sm text-gray-600">{selectedStudent.email}</p><RolePill role={selectedStudent.role} isTeamContact={selectedStudent.isTeamContact} /></div>
-                {selectedStudent.role !== "leader" ? (
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-black text-amber-900 transition hover:bg-amber-100 disabled:opacity-50"
-                    disabled={updatingContactId === selectedStudent.id}
-                    onClick={() => setTeamContact(selectedStudent, !selectedStudent.isTeamContact)}
-                  >
-                    <BadgeCheck className="h-4 w-4" />
-                    {selectedStudent.isTeamContact ? "Remove Team Contact" : "Designate as Team Contact"}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-black text-amber-900 transition hover:bg-amber-100 disabled:opacity-50"
+                  disabled={updatingContactId === selectedStudent.id}
+                  onClick={() => setParticipantLeader(selectedStudent, !(selectedStudent.role === "leader" || selectedStudent.isTeamContact))}
+                >
+                  <BadgeCheck className="h-4 w-4" />
+                  {selectedStudent.role === "leader" || selectedStudent.isTeamContact ? "Remove as Leader" : "Designate as Leader"}
+                </button>
               </div>
             ) : null}
           </div>
@@ -482,12 +483,12 @@ export function UnassignedStudentsContent({
 }
 
 function RolePill({ role, isTeamContact, compact = false }: { role: UnassignedStudent["role"]; isTeamContact: boolean; compact?: boolean }) {
+  const isLeader = role === "leader" || isTeamContact;
   return (
     <span className={`${compact ? "mt-0.5" : "mt-2"} flex flex-wrap gap-1`}>
-      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${role === "leader" ? "bg-amber-100 text-amber-800" : role === "participant" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-600"}`}>
-        {role ?? "Unspecified role"}
+      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isLeader ? "bg-amber-100 text-amber-800" : role === "participant" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-600"}`}>
+        {isLeader ? "Leader" : role ?? "Unspecified role"}
       </span>
-      {isTeamContact && role !== "leader" ? <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-800">Team contact</span> : null}
     </span>
   );
 }

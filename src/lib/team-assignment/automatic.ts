@@ -91,7 +91,7 @@ function planByRole(
   if (coordinators.length < desiredTeamCount) {
     const shortage = desiredTeamCount - coordinators.length;
     throw new Error(
-      `Role-balanced assignment needs ${shortage} more team contact${shortage === 1 ? "" : "s"}.`,
+      `Role-balanced assignment needs ${shortage} more leader${shortage === 1 ? "" : "s"}.`,
     );
   }
 

@@ -4,7 +4,7 @@ import { getDataEnvironment } from "@/lib/data-environment";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function PATCH(request: Request) {
-  let body: { eventId?: unknown; participantId?: unknown; isTeamContact?: unknown };
+  let body: { eventId?: unknown; participantId?: unknown; isLeader?: unknown };
 
   try {
     body = await request.json();
@@ -15,7 +15,7 @@ export async function PATCH(request: Request) {
   const eventId = stringValue(body.eventId);
   const participantId = stringValue(body.participantId);
 
-  if (!isUuid(eventId) || !isUuid(participantId) || typeof body.isTeamContact !== "boolean") {
+  if (!isUuid(eventId) || !isUuid(participantId) || typeof body.isLeader !== "boolean") {
     return json({ ok: false, error: "Please check the event, participant, and designation." }, 400);
   }
 
@@ -32,7 +32,9 @@ export async function PATCH(request: Request) {
 
   const participant = await supabase
     .from("participants")
-    .update({ is_team_contact: body.isTeamContact })
+    .update(body.isLeader
+      ? { is_team_contact: true }
+      : { is_team_contact: false, registration_role: "participant" })
     .eq("id", participantId)
     .eq("event_id", eventId)
     .select("id")
@@ -42,7 +44,7 @@ export async function PATCH(request: Request) {
   if (!participant.data) return json({ ok: false, error: "Participant not found." }, 404);
 
   revalidatePath(`/organizer/event/${eventId}/unassigned`);
-  return json({ ok: true, isTeamContact: body.isTeamContact });
+  return json({ ok: true, isLeader: body.isLeader });
 }
 
 function stringValue(value: unknown) {

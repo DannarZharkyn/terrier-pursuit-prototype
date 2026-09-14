@@ -69,7 +69,7 @@ describe("planAutomaticAssignments", () => {
     assert.deepEqual(Object.keys(plan.teamSizes), ["empty"]);
   });
 
-  it("requires enough leaders or team contacts for the target team count", () => {
+  it("requires enough preferred or designated leaders for the target team count", () => {
     assert.throws(() => planAutomaticAssignments({
       participants: Array.from({ length: 10 }, (_, index) => ({
         id: `p${index}`,
@@ -79,10 +79,10 @@ describe("planAutomaticAssignments", () => {
       mode: "role_balanced",
       targetTeamSize: 5,
       random: fixedRandom,
-    }), /1 more team contact/);
+    }), /1 more leader/);
   });
 
-  it("supplements preferred leaders with organizer-designated team contacts", () => {
+  it("supplements preferred leaders with organizer-designated leaders", () => {
     const plan = planAutomaticAssignments({
       participants: [
         ...Array.from({ length: 10 }, (_, index) => ({ id: `l${index}`, role: "leader" as const })),
