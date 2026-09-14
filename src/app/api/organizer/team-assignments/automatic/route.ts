@@ -157,6 +157,37 @@ export async function POST(request: Request) {
   });
 }
 
+export async function DELETE(request: Request) {
+  let body: { eventId?: unknown };
+
+  try {
+    body = await request.json();
+  } catch {
+    return json({ ok: false, error: "Request body must be valid JSON." }, 400);
+  }
+
+  const eventId = stringValue(body.eventId);
+  if (!isUuid(eventId)) {
+    return json({ ok: false, error: "Please check the event." }, 400);
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const result = await supabase.rpc("reset_event_teams", {
+    target_event_id: eventId,
+    target_environment: getDataEnvironment(),
+  });
+
+  if (result.error) {
+    const status = result.error.message.includes("before the game starts") ? 409 : 500;
+    return json({ ok: false, error: result.error.message }, status);
+  }
+
+  revalidatePath(`/organizer/event/${eventId}`);
+  revalidatePath(`/organizer/event/${eventId}/unassigned`);
+
+  return json({ ok: true, unassignedCount: Number(result.data ?? 0) });
+}
+
 async function createAutomaticTeam(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   eventId: string,

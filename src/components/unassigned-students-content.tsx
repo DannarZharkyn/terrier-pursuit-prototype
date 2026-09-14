@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { BadgeCheck, CheckCircle2, PlusCircle, Shuffle, Sparkles, Trash2, UserPlus, Users, XCircle } from "lucide-react";
+import { BadgeCheck, CheckCircle2, PlusCircle, RotateCcw, Shuffle, Sparkles, Trash2, UserPlus, Users, XCircle } from "lucide-react";
 
 export type UnassignedStudent = {
   id: string;
@@ -41,6 +41,7 @@ export function UnassignedStudentsContent({
   const [assignmentMode, setAssignmentMode] = useState<"random" | "role_balanced">("random");
   const [targetTeamSize, setTargetTeamSize] = useState(5);
   const [isAutoAssigning, setIsAutoAssigning] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [updatingContactId, setUpdatingContactId] = useState<string>();
   const selectedStudent = students.find((student) => student.id === selectedStudentId);
   const leaderCount = students.filter((student) => student.role === "leader").length;
@@ -51,6 +52,7 @@ export function UnassignedStudentsContent({
   const contactShortage = Math.max(0, requiredTeamCount - coordinatorCount);
   const specifiedParticipantCount = students.filter((student) => student.role === "participant").length;
   const unspecifiedRoleCount = students.filter((student) => !student.role).length;
+  const assignedParticipantCount = teams.reduce((total, team) => total + team.memberCount, 0);
 
   async function automaticallyAssign() {
     if (!students.length) return;
@@ -88,6 +90,38 @@ export function UnassignedStudentsContent({
       setError("Could not reach the automatic assignment service. Please try again.");
     } finally {
       setIsAutoAssigning(false);
+    }
+  }
+
+  async function resetTeamAssignments() {
+    if (!assignedParticipantCount) return;
+    if (!window.confirm(
+      `Unassign all ${assignedParticipantCount} team members and delete every team? The participants and event will be kept. This cannot be undone.`,
+    )) return;
+
+    setIsResetting(true);
+    setSuccess(undefined);
+    setError(undefined);
+
+    try {
+      const response = await fetch("/api/organizer/team-assignments/automatic", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId }),
+      });
+      const result = await response.json() as { ok: boolean; error?: string; unassignedCount?: number };
+
+      if (!result.ok) {
+        setError(result.error ?? "Could not reset the team assignments.");
+        return;
+      }
+
+      setSuccess(`${result.unassignedCount} participants were returned to the unassigned list. All teams were deleted.`);
+      window.setTimeout(() => window.location.reload(), 700);
+    } catch {
+      setError("Could not reach the team reset service. Please try again.");
+    } finally {
+      setIsResetting(false);
     }
   }
 
@@ -291,8 +325,11 @@ export function UnassignedStudentsContent({
           </label>
           <div className="min-w-44">
             <label className="block"><span className="label">Target team size</span><input className="field mt-2" type="number" min={2} max={20} value={targetTeamSize} onChange={(event) => setTargetTeamSize(Number(event.target.value))} /></label>
-            <button className="btn-primary mt-3 w-full" type="button" disabled={!students.length || !targetTeamSizeValid || isAutoAssigning || (assignmentMode === "role_balanced" && contactShortage > 0)} onClick={automaticallyAssign}>
+            <button className="btn-primary mt-3 w-full" type="button" disabled={!students.length || !targetTeamSizeValid || isAutoAssigning || isResetting || (assignmentMode === "role_balanced" && contactShortage > 0)} onClick={automaticallyAssign}>
               <Shuffle className="h-4 w-4" />{isAutoAssigning ? "Assigning..." : "Assign Everyone"}
+            </button>
+            <button className="btn-secondary mt-2 w-full border-red-200 text-red-700 hover:bg-red-50" type="button" disabled={!assignedParticipantCount || isAutoAssigning || isResetting} onClick={resetTeamAssignments}>
+              <RotateCcw className="h-4 w-4" />{isResetting ? "Resetting..." : "Unassign Everyone"}
             </button>
           </div>
         </div>
