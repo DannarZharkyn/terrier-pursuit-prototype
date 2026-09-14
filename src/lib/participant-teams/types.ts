@@ -33,6 +33,7 @@ export type TeamMember = {
   lastName: string;
   email: string;
   role: "leader" | "participant" | null;
+  isTeamContact: boolean;
 };
 
 export type ParticipantTeam = {

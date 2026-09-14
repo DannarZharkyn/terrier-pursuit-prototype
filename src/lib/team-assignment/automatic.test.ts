@@ -69,13 +69,38 @@ describe("planAutomaticAssignments", () => {
     assert.deepEqual(Object.keys(plan.teamSizes), ["empty"]);
   });
 
-  it("requires a leader for role-balanced assignment", () => {
+  it("requires enough leaders or team contacts for the target team count", () => {
     assert.throws(() => planAutomaticAssignments({
-      participants: [{ id: "p1", role: "participant" }],
+      participants: Array.from({ length: 10 }, (_, index) => ({
+        id: `p${index}`,
+        role: index === 0 ? "leader" as const : "participant" as const,
+      })),
       teams: [],
       mode: "role_balanced",
       targetTeamSize: 5,
       random: fixedRandom,
-    }), /at least one unassigned leader/);
+    }), /1 more team contact/);
+  });
+
+  it("supplements preferred leaders with organizer-designated team contacts", () => {
+    const plan = planAutomaticAssignments({
+      participants: [
+        ...Array.from({ length: 10 }, (_, index) => ({ id: `l${index}`, role: "leader" as const })),
+        ...Array.from({ length: 10 }, (_, index) => ({
+          id: `c${index}`,
+          role: "participant" as const,
+          isTeamContact: true,
+        })),
+        ...Array.from({ length: 80 }, (_, index) => ({ id: `p${index}`, role: "participant" as const })),
+      ],
+      teams: [],
+      mode: "role_balanced",
+      targetTeamSize: 5,
+      random: fixedRandom,
+    });
+
+    assert.equal(plan.newTeams.length, 20);
+    assert.equal(plan.assignments.length, 100);
+    assert.deepEqual(Object.values(plan.teamSizes), Array.from({ length: 20 }, () => 5));
   });
 });

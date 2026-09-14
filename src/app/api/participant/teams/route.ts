@@ -22,6 +22,7 @@ type ParticipantRow = {
   email: string;
   event_id: string;
   registration_role: "leader" | "participant" | null;
+  is_team_contact: boolean;
 };
 
 type TeamRow = {
@@ -56,6 +57,7 @@ type TeamMemberRow = {
         last_name: string;
         email: string;
         registration_role: "leader" | "participant" | null;
+        is_team_contact: boolean;
       }
     | {
         id: string;
@@ -63,6 +65,7 @@ type TeamMemberRow = {
         last_name: string;
         email: string;
         registration_role: "leader" | "participant" | null;
+        is_team_contact: boolean;
       }[]
     | null;
 };
@@ -205,6 +208,7 @@ export async function POST(request: Request) {
           lastName: participant.last_name,
           email: participant.email,
           role: participant.registration_role,
+          isTeamContact: participant.is_team_contact,
         },
       ],
     },
@@ -237,7 +241,7 @@ async function getPublishedEventParticipant(
 
   const { data, error } = await supabase
     .from("participants")
-    .select("id, first_name, last_name, email, event_id, registration_role")
+    .select("id, first_name, last_name, email, event_id, registration_role, is_team_contact")
     .eq("id", participantId)
     .eq("event_id", eventId);
 
@@ -319,7 +323,7 @@ async function getTeamMembers(
 > {
   const { data, error } = await supabase
     .from("team_memberships")
-    .select("participants!inner(id, first_name, last_name, email, registration_role)")
+    .select("participants!inner(id, first_name, last_name, email, registration_role, is_team_contact)")
     .eq("team_id", teamId);
 
   if (error) {
@@ -337,6 +341,7 @@ async function getTeamMembers(
       lastName: participant.last_name,
       email: participant.email,
       role: participant.registration_role,
+      isTeamContact: participant.is_team_contact,
     }));
 
   return { ok: true, members };

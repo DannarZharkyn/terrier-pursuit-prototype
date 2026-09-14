@@ -3,6 +3,7 @@ export type AutomaticAssignmentMode = "random" | "role_balanced";
 export type AssignmentParticipant = {
   id: string;
   role: "leader" | "participant" | null;
+  isTeamContact?: boolean;
 };
 
 export type AssignmentTeam = {
@@ -39,7 +40,7 @@ export function planAutomaticAssignments({
   }
 
   return mode === "role_balanced"
-    ? planByRole(participants, teams, random)
+    ? planByRole(participants, teams, targetTeamSize, random)
     : planRandomly(participants, teams, targetTeamSize, random);
 }
 
@@ -73,37 +74,52 @@ function planRandomly(
 function planByRole(
   participants: AssignmentParticipant[],
   teams: AssignmentTeam[],
+  targetTeamSize: number,
   random: () => number,
 ) {
-  const leaders = shuffle(participants.filter((participant) => participant.role === "leader"), random);
+  const preferredLeaders = shuffle(
+    participants.filter((participant) => participant.role === "leader"),
+    random,
+  );
+  const designatedContacts = shuffle(
+    participants.filter((participant) => participant.role !== "leader" && participant.isTeamContact),
+    random,
+  );
+  const coordinators = [...preferredLeaders, ...designatedContacts];
+  const desiredTeamCount = Math.max(1, Math.ceil(participants.length / targetTeamSize));
 
-  if (!leaders.length) {
-    throw new Error("Role-balanced assignment needs at least one unassigned leader.");
+  if (coordinators.length < desiredTeamCount) {
+    const shortage = desiredTeamCount - coordinators.length;
+    throw new Error(
+      `Role-balanced assignment needs ${shortage} more team contact${shortage === 1 ? "" : "s"}.`,
+    );
   }
 
   const emptyTeams = shuffle(teams.filter((team) => team.memberCount === 0), random);
   const newTeams = makeNewTeams(
-    Math.max(0, leaders.length - emptyTeams.length),
+    Math.max(0, desiredTeamCount - emptyTeams.length),
     teams.map((team) => team.name),
   );
   const leaderTeamKeys = [
-    ...emptyTeams.slice(0, leaders.length).map((team) => team.id),
+    ...emptyTeams.slice(0, desiredTeamCount).map((team) => team.id),
     ...newTeams.map((team) => team.key),
   ];
   const teamSizes = Object.fromEntries(leaderTeamKeys.map((key) => [key, 0]));
-  const assignments = leaders.map((leader, index) => {
+  const teamCoordinators = coordinators.slice(0, desiredTeamCount);
+  const assignments = teamCoordinators.map((leader, index) => {
     const teamKey = leaderTeamKeys[index];
     if (!teamKey) throw new Error("Could not find a team for every leader.");
     teamSizes[teamKey] = 1;
     return { participantId: leader.id, teamKey };
   });
   const remainingParticipants = shuffle(
-    participants.filter((participant) => participant.role !== "leader"),
+    participants.filter((participant) => !teamCoordinators.some((coordinator) => coordinator.id === participant.id)),
     random,
   );
 
-  remainingParticipants.forEach((participant, index) => {
-    const teamKey = leaderTeamKeys[index % leaderTeamKeys.length];
+  remainingParticipants.forEach((participant) => {
+    const minimumSize = Math.min(...leaderTeamKeys.map((key) => teamSizes[key]));
+    const teamKey = leaderTeamKeys.find((key) => teamSizes[key] === minimumSize);
     if (!teamKey) throw new Error("Could not find a team for automatic assignment.");
     teamSizes[teamKey] += 1;
     assignments.push({ participantId: participant.id, teamKey });

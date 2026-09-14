@@ -162,6 +162,11 @@ export function ParticipantTeamCard({
                       Leader{member.id === currentParticipantId ? " — You" : ""}
                     </span>
                   ) : null}
+                  {member.isTeamContact && member.role !== "leader" ? (
+                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-purple-800">
+                      Team Contact{member.id === currentParticipantId ? " — You" : ""}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="block text-xs font-medium text-gray-500">
                   {member.email}

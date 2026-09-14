@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   const [participantResult, teamResult] = await Promise.all([
     supabase
       .from("participants")
-      .select("id, registration_role")
+      .select("id, registration_role, is_team_contact")
       .eq("event_id", eventId),
     supabase
       .from("teams")
@@ -80,6 +80,7 @@ export async function POST(request: Request) {
   const unassignedParticipants = ((participantResult.data ?? []) as {
     id: string;
     registration_role: "leader" | "participant" | null;
+    is_team_contact: boolean;
   }[]).filter((participant) => !assignedIds.has(participant.id));
   const memberCountByTeam = new Map<string, number>();
   memberships.forEach((membership) => {
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
       participants: unassignedParticipants.map((participant) => ({
         id: participant.id,
         role: participant.registration_role,
+        isTeamContact: participant.is_team_contact,
       })),
       teams: teams.map((team) => ({
         ...team,

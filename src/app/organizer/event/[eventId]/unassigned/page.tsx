@@ -19,6 +19,7 @@ type ParticipantRow = {
   last_name: string;
   email: string;
   registration_role: "leader" | "participant" | null;
+  is_team_contact: boolean;
 };
 
 type TeamRow = {
@@ -62,7 +63,7 @@ async function getUnassignedPageData(eventId: string) {
   const supabase = createSupabaseAdminClient();
   const participants = await supabase
     .from("participants")
-    .select("id, first_name, last_name, email, registration_role")
+    .select("id, first_name, last_name, email, registration_role, is_team_contact")
     .eq("event_id", eventId)
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
@@ -101,6 +102,7 @@ async function getUnassignedPageData(eventId: string) {
     name: string;
     email: string;
     role: "leader" | "participant" | null;
+    isTeamContact: boolean;
   }[]>();
   const assignedParticipantIds = new Set<string>();
 
@@ -116,6 +118,7 @@ async function getUnassignedPageData(eventId: string) {
           name: `${participant.first_name} ${participant.last_name}`,
           email: participant.email,
           role: participant.registration_role,
+          isTeamContact: participant.is_team_contact,
         },
       ]);
     }
@@ -129,6 +132,7 @@ async function getUnassignedPageData(eventId: string) {
         name: `${participant.first_name} ${participant.last_name}`,
         email: participant.email,
         role: participant.registration_role,
+        isTeamContact: participant.is_team_contact,
       })),
     teams: ((teams ?? []) as unknown as TeamRow[]).map((team) => ({
       id: team.id,
