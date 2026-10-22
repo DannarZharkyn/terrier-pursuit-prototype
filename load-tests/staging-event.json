@@ -1,8 +1,8 @@
 {
   "event": {
     "name": "Load Testing Event",
-    "startsAt": "2026-08-15T14:00:00-04:00",
-    "submissionDeadline": "2026-08-15T18:00:00-04:00",
+    "startsAt": "2099-08-15T14:00:00-04:00",
+    "submissionDeadline": "2099-08-15T18:00:00-04:00",
     "rules": "This staging event exists only for controlled load testing. Do not use real participant information.",
     "disclaimer": "This is a staging-only load-test event using synthetic participants and no real-world activity."
   },

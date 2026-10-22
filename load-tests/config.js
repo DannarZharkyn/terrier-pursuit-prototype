@@ -86,13 +86,22 @@ export function testConfig() {
 }
 
 export function targetUrl() {
-  const value = (__ENV.TARGET_URL || "").replace(/\/$/, "");
+  const value = (__ENV.TARGET_URL || "").trim().replace(/\/+$/, "");
 
   if (!value) {
     throw new Error("TARGET_URL is required. Use a dedicated staging deployment.");
   }
 
-  const isProduction = value === "https://terrier-pursuit-prototype.vercel.app";
+  // Check hosts even when a URL includes a path, query, or explicit port.
+  const match = /^https?:\/\/([^/?#]+)(?:[/?#]|$)/i.exec(value);
+  if (!match || match[1].includes("@")) {
+    throw new Error("TARGET_URL must be an HTTP(S) URL without embedded credentials.");
+  }
+  const hostname = match[1].toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
+  const isProduction = [
+    "terrier-pursuit.vercel.app",
+    "terrier-pursuit-prototype.vercel.app",
+  ].includes(hostname);
   if (isProduction && __ENV.ALLOW_PRODUCTION !== "true") {
     throw new Error(
       "Production load testing is blocked. Use staging, or explicitly set ALLOW_PRODUCTION=true after approval.",

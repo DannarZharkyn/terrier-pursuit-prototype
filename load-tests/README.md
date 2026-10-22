@@ -7,7 +7,11 @@ under increasing numbers of virtual users.
 
 - Use a dedicated Vercel staging deployment and test Supabase project/event.
 - Do not use real participant names or email addresses.
-- Production is blocked unless `ALLOW_PRODUCTION=true` is explicitly provided.
+- Known live (`terrier-pursuit.vercel.app`) and prototype
+  (`terrier-pursuit-prototype.vercel.app`) hosts are blocked unless
+  `ALLOW_PRODUCTION=true` is explicitly provided. Do not enable this override
+  for routine testing. Other aliases are not automatically detected: verify
+  both the deployment and its database before running any scenario.
 - Run profiles in order. Do not jump to 500 or 1,000 users before reviewing 100.
 - The onboarding scenario creates participant and consent records. Clean up the
   test event after the run.
@@ -24,6 +28,12 @@ brew install k6
 
 ## First smoke test
 
+These standalone scripts are not part of the Next.js build or unit tests.
+The read-only scenario measures the participant page and the organizer
+dashboard's redirect to login, not an authenticated organizer dashboard.
+The onboarding scenario writes synthetic registration and consent records
+and measures participant API reads.
+
 The read-only test does not create database records:
 
 ```sh
@@ -33,6 +43,13 @@ bash load-tests/run.sh read-only
 ```
 
 ## Participant onboarding test
+
+`staging-event.json` is an example publish payload with synthetic participants,
+`example.com` addresses, and a fictional landmark. Its year-2099 dates are
+placeholders: set suitable dates in a local copy before creating a staging
+event. Publishing requires an authorized organizer session. This fixture is
+not loaded automatically. Use a dedicated disposable database; a different
+Vercel URL alone does not guarantee data isolation.
 
 Create a published staging event and use its six-character game code:
 
@@ -66,6 +83,11 @@ bash load-tests/run.sh onboarding
 ```
 
 ## Results
+
+Historical results are local, ignored artifacts. Preserve useful HTML reports,
+JSON summaries, and PDFs before cleaning temporary files. Old results describe
+the code, infrastructure, and scenario at the time of the run; they do not
+establish current capacity or authenticated dashboard performance.
 
 Every run creates a timestamped directory under `load-tests/results` with:
 

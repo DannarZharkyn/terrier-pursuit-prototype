@@ -15,7 +15,7 @@ export default function () {
   const participantOk = check(participantPage, {
     "participant page returns 200": (response) => response.status === 200,
     "participant page contains join form": (response) =>
-      response.body.includes("Join the Event"),
+      response.body.includes("Game Code"),
   });
 
   sleep(Math.random() * 2 + 1);
@@ -24,9 +24,10 @@ export default function () {
     tags: { name: "organizer_dashboard" },
   });
   const organizerOk = check(organizerPage, {
-    "organizer dashboard returns 200": (response) => response.status === 200,
-    "organizer dashboard contains heading": (response) =>
-      response.body.includes("Organizer Dashboard"),
+    "organizer dashboard redirects to login": (response) =>
+      response.status === 200 && response.url.includes("/organizer/login"),
+    "organizer login contains heading": (response) =>
+      response.body.includes("Organizer Sign In"),
   });
 
   failures.add(!(participantOk && organizerOk));
